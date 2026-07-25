@@ -286,6 +286,29 @@ class TestSuspendEndDate:
         with pytest.raises(ReadOnlyError):
             await suspend_hold(None, Config(read_only=True), "70000001", None)
 
+    def test_result_reports_the_recorded_date_not_the_requested_one(self):
+        """A suspend that records no end date must not promise an auto-resume.
+
+        Live-verified: OverDrive digital titles have neither
+        supportsSuspendHoldStartDateEdit nor supportsSuspendHoldEndDateEdit.
+        They accept an endDate and do suspend, but schedule no resume -- the
+        hold stays paused until reactivated. Echoing the requested date back
+        would tell the user their book returns to the queue on a date when it
+        never will.
+        """
+        from spl_mcp.holds import _suspend_result_message
+
+        with_date = _suspend_result_message(
+            "Dune", 17, recorded="2026-08-24", requested="2026-08-24"
+        )
+        assert "until 2026-08-24" in with_date
+        assert "automatically" in with_date
+
+        without = _suspend_result_message("Dune", 75, recorded=None, requested="2026-08-25")
+        assert "until 2026-08-25" not in without
+        assert "no effect" in without
+        assert "until it is reactivated" in without
+
     def test_suspend_end_date_is_surfaced_on_a_hold(self):
         state = {
             "entities": {

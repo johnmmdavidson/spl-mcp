@@ -225,11 +225,38 @@ no loan was triggered:
 
 Both test holds were cancelled; no state was left on the account.
 
-Digital `suspend` / `reactivate` have **not** been exercised by this server. The
-request shape is identical to the physical path (the operation is keyed on
-`holdIds`, not material type), and digital holds do reach a `SUSPENDED` state
-with `updateSuspend` / `activate` in their actions — but that is inference, not
-a verified run.
+| `suspend_hold` (DIGITAL) | `SUSPENDED`, position 75 kept, **no end date recorded** |
+| `reactivate_hold` (DIGITAL) | Back to `NOT_YET_AVAILABLE`, position 75 kept |
+
+### Scheduled resume works for physical holds only
+
+Suspending keeps queue position for both material types. Whether the hold
+*resumes on its own* does not:
+
+| | `…StartDateEdit` | `…EndDateEdit` | Result |
+|---|---|---|---|
+| Physical (`BK`) | false | **true** | `endDate` stored as `suspendEndDate`; resumes automatically |
+| Digital (OverDrive) | false | false | `endDate` accepted, **not recorded**; stays paused until reactivated |
+
+The library's own UI branches on exactly these two flags:
+
+```js
+supportsSuspendHoldStartDateEdit || supportsSuspendHoldEndDateEdit
+  ? openDatePickerDialog()                                   // physical
+  : pauseOrResumeHolds({ suspended: {                        // digital
+      startDate: null, endDate: moment().add(1,'day').format(), status: true } })
+```
+
+Two things follow. First, `endDate` is *always* sent — even on the path that
+never shows the user a date — which is why a suspend omitting it silently
+no-ops. Second, on digital titles the date is a formality: BiblioCommons itself
+sends "tomorrow" and never surfaces it again.
+
+So `suspend_hold` reports the date the library **recorded**, read back from the
+holds list, rather than the one requested. On a digital hold it says plainly
+that the requested date has no effect and the hold stays paused until
+reactivated. Promising an automatic resume that will never happen is the worst
+available answer for someone managing a queue.
 
 Three defects were found and fixed in the process: the `accountId` resolution
 bug described above, the mandatory `endDate`, and a missing `suspendEndDate`

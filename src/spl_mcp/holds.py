@@ -279,6 +279,31 @@ def _require_action(hold: Hold, action: str, *, tool: str) -> None:
         )
 
 
+def _suspend_result_message(
+    title: str | None, position: int | None, *, recorded: str | None, requested: str
+) -> str:
+    """Describe what the suspend actually did, not what was asked for.
+
+    Report the end date the library recorded, not the one requested. Items whose
+    policy has neither ``supportsSuspendHoldStartDateEdit`` nor
+    ``supportsSuspendHoldEndDateEdit`` -- which covers OverDrive digital titles
+    -- accept an ``endDate`` and do suspend, but schedule no resume. Echoing the
+    requested date back would promise an automatic reactivation that never
+    happens, which is the worst possible answer for someone managing a queue.
+    """
+    if recorded:
+        return (
+            f"Suspended the hold on {title!r} until {recorded}; it resumes automatically "
+            f"then. Queue position {position} is kept."
+        )
+    return (
+        f"Suspended the hold on {title!r}. Queue position {position} is kept. "
+        f"NOTE: the library did not record an end date (this item does not support a "
+        f"scheduled resume), so the requested date {requested} has no effect -- the hold "
+        f"stays paused until it is reactivated."
+    )
+
+
 def _find_hold(holds: HoldsList, hold_id: str) -> Hold:
     for hold in [*holds.physical, *holds.digital]:
         if hold.hold_id == hold_id:
@@ -510,14 +535,31 @@ async def suspend_hold(
             f"{updated.status!r}, not SUSPENDED. Gateway said: {payload}."
         )
 
-    tail = f" until {end_date}" if end_date else ""
+    # Report the end date the library actually recorded, not the one we asked
+    # for. Items whose policy has neither supportsSuspendHoldStartDateEdit nor
+    # supportsSuspendHoldEndDateEdit -- which covers OverDrive digital titles --
+    # accept the endDate and suspend, but do not schedule a resume. Echoing the
+    # requested date back would promise an automatic reactivation that will
+    # never happen, which is the worst possible answer for someone managing a
+    # hold queue.
+    recorded = updated.suspend_end_date
+    message = _suspend_result_message(
+        hold.title, updated.queue_position, recorded=recorded, requested=end_date
+    )
+
     return HoldActionResult(
         ok=True,
         action="suspend_hold",
         hold_id=hold_id,
         bib_id=hold.bib_id,
-        message=f"Suspended the hold on {hold.title!r}{tail}. Queue position is kept.",
-        detail={"status": updated.status, "until": end_date},
+        message=message,
+        detail={
+            "status": updated.status,
+            "queue_position": updated.queue_position,
+            "until": recorded,
+            "requested_until": end_date,
+            "resumes_automatically": bool(recorded),
+        },
     )
 
 
