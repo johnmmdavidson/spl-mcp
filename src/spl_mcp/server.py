@@ -117,7 +117,6 @@ async def get_title(
         brief = bib.get("briefInfo") or {}
         avail = bib.get("availability") or {}
         policy = bib.get("policy") or {}
-        material_policy = policy.get("materialPolicy") or {}
         return {
             "bib_id": bib_id,
             "title": brief.get("title"),
@@ -136,7 +135,6 @@ async def get_title(
             "is_digital": policy.get("materialType") == "DIGITAL",
             "provider": policy.get("provider"),
             "holdable": bool(policy.get("holdable", False)),
-            "supports_suspend_hold": bool(material_policy.get("supportsSuspendHold", False)),
             "status": avail.get("status"),
             "total_copies": avail.get("totalCopies"),
             "available_copies": avail.get("availableCopies"),

@@ -56,8 +56,12 @@ class FormatOption(BaseModel):
     hold_queue: int | None = Field(None, description="Copies currently on hold ahead of you")
     edition: str | None = None
     publication_date: str | None = None
-    supports_suspend_hold: bool = False
-    supports_suspend_start_date_edit: bool = False
+    # Deliberately NOT exposing the catalog's supportsSuspendHold /
+    # supportsSuspendHoldStartDateEdit policy flags. Verified against SPL: they
+    # read false on every physical item, while every real hold offers "suspend"
+    # and suspending demonstrably works. Publishing them would tell the agent a
+    # hold cannot be paused when it can. Whether a hold can be paused is
+    # answered by that hold's own `actions` list, which list_holds returns.
 
 
 class WorkGroup(BaseModel):

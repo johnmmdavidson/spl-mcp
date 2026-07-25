@@ -175,6 +175,26 @@ authentication at all. See [KINDLE.md](KINDLE.md).
 live results beyond the five codes §3.3 lists. The open-enum handling is load
 bearing, and is pinned by a test.
 
+## A4b. The catalog's suspend policy flags are wrong, and are not published
+
+§5 of the brief said `suspend_hold` should "respect `supportsSuspendHoldStartDateEdit`
+from the bib policy." Following that would have broken the feature.
+
+Live-verified across multiple SPL physical bibs: `policy.materialPolicy` reports
+`supportsSuspendHold: false` and `supportsSuspendHoldStartDateEdit: false` on
+**every** one -- while every actual physical hold offers `suspend` in its
+`actions` list, and suspending demonstrably works (see A6). SPL appears not to
+maintain these flags.
+
+So the code never consults them: it attempts the suspend and verifies the
+result. They are also deliberately **absent from `search_titles` and
+`get_title` output**, because an agent reading `supports_suspend_hold: false`
+would reasonably tell the user a hold cannot be paused when it can.
+
+Whether a given hold can be paused is answered by that hold's own `actions`
+array, which `list_holds` returns -- consistent with §3.6's instruction to read
+actions per hold rather than assuming.
+
 ## A5. Search pagination
 
 `search.catalogSearch.pagination` is `{count, limit, page, pages, pageForSolr}`

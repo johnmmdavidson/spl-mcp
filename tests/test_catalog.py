@@ -77,6 +77,22 @@ def test_unknown_format_codes_pass_through(search_state):
             assert fmt.format_label
 
 
+def test_suspend_policy_flags_are_not_published(search_state):
+    """The catalog's suspend flags are wrong for SPL and must not be exposed.
+
+    Live-verified: every SPL physical bib reports supportsSuspendHold=false,
+    while every real hold offers "suspend" and suspending works. Publishing the
+    flag would tell the agent a hold cannot be paused when it can. The truth
+    lives on the hold's own `actions` list, which list_holds returns.
+    """
+    results = parse_search(search_state, "dune")
+    for group in results.results:
+        for fmt in group.formats:
+            dumped = fmt.model_dump()
+            assert "supports_suspend_hold" not in dumped
+            assert "supports_suspend_start_date_edit" not in dumped
+
+
 def test_missing_results_key_fails_loudly():
     with pytest.raises(ParseError, match="results"):
         parse_search({"search": {"catalogSearch": {}}, "entities": {"bibs": {}}}, "q")

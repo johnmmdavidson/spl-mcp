@@ -29,7 +29,6 @@ def _format_option(bib_id: str, bib: dict[str, Any]) -> FormatOption:
     brief = bib.get("briefInfo") or {}
     avail = bib.get("availability") or {}
     policy = bib.get("policy") or {}
-    material_policy = policy.get("materialPolicy") or {}
 
     code = brief.get("format")
     material_type = policy.get("materialType")
@@ -51,10 +50,6 @@ def _format_option(bib_id: str, bib: dict[str, Any]) -> FormatOption:
         hold_queue=avail.get("heldCopies"),
         edition=brief.get("edition"),
         publication_date=brief.get("publicationDate"),
-        supports_suspend_hold=bool(material_policy.get("supportsSuspendHold", False)),
-        supports_suspend_start_date_edit=bool(
-            material_policy.get("supportsSuspendHoldStartDateEdit", False)
-        ),
     )
 
 
