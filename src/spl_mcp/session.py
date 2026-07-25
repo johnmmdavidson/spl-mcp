@@ -38,8 +38,11 @@ _BOT_WALL_MARKERS = ("recaptcha", "hcaptcha", "datadome", "perimeterx", "cf-turn
 class SplSession:
     """Owns the HTTP client, the cookie jar, and the login lifecycle."""
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, transport: httpx.AsyncBaseTransport | None = None):
         self.config = config
+        # Only the tests pass a transport; it lets the login and re-login paths
+        # be exercised without a network or a real library account.
+        self._transport = transport
         self._client: httpx.AsyncClient | None = None
         self._lock = asyncio.Lock()
         self._logged_in_hint = False
@@ -55,6 +58,7 @@ class SplSession:
             },
             timeout=self.config.timeout_seconds,
             follow_redirects=True,
+            transport=self._transport,
         )
         self._load_cookies(client)
         return client
@@ -154,12 +158,20 @@ class SplSession:
 
     @staticmethod
     def _looks_like_login(response: httpx.Response) -> bool:
-        """True when we were bounced to the login page instead of the content."""
-        if "/user/login" in urlparse(str(response.url)).path:
+        """True when we got the login page instead of the content we asked for.
+
+        The presence of the login form is the reliable signal, not the URL. A
+        successful login POST can legitimately settle on a ``/user/login`` URL
+        (the form posts to it with a ``destination`` query), so treating the
+        path alone as failure would misread a success. The URL is used only
+        when there is no body to inspect.
+        """
+        body = response.text[:200_000]
+        if 'name="user_pin"' in body:
             return True
-        # Belt and braces: an unauthenticated fetch of a member page sometimes
-        # renders the login form at the requested URL rather than redirecting.
-        return 'name="user_pin"' in response.text[:200_000]
+        if not body.strip():
+            return "/user/login" in urlparse(str(response.url)).path
+        return False
 
     async def _login(self, client: httpx.AsyncClient) -> None:
         """Scrape the CSRF token, POST the credentials, verify it took."""
