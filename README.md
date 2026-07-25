@@ -23,7 +23,7 @@ Raspberry Pi.
 | `list_holds()` | yes | All holds — physical and digital |
 | `place_hold(bib_id, pickup_branch=None)` | yes | Mutating. `pickup_branch` is physical-only |
 | `cancel_hold(hold_id)` | yes | Mutating |
-| `suspend_hold(hold_id, until)` | yes | Mutating. `until` is required |
+| `suspend_hold(hold_id, until)` | yes | Mutating. `until` is required, but see below |
 | `reactivate_hold(hold_id)` | yes | Mutating |
 
 Physical and digital (ebook / eaudiobook) holds are treated identically. There
@@ -37,6 +37,43 @@ address is read from your library account rather than asked for.
 What any individual hold permits depends on its state, which `list_holds`
 reports per hold in `actions`. A hold that's ready for pickup can be cancelled
 but not suspended, and the server checks that before sending anything.
+
+### Suspending: digital holds do not resume on their own
+
+Suspending keeps your queue position for both material types. Whether the hold
+*comes back by itself* differs, and the library gives no warning about it:
+
+| | Keeps queue position | Resumes automatically on `until` |
+|---|---|---|
+| **Physical** | yes | **yes** — the date is stored and honoured |
+| **Digital** (OverDrive) | yes | **no** — the date is discarded |
+
+A suspended digital hold stays paused **until something explicitly reactivates
+it**. `until` is still required by the API — omit it and the library accepts the
+request, returns success, and does nothing at all — but on a digital title the
+date is a formality that BiblioCommons itself fills in and never uses.
+
+So `suspend_hold` reports the date the library actually **recorded**, read back
+from the holds list, not the one you asked for. On a digital hold it says so
+outright, and the result carries `resumes_automatically: false`:
+
+```json
+{
+  "status": "SUSPENDED",
+  "queue_position": 75,
+  "until": null,
+  "requested_until": "2026-08-25",
+  "resumes_automatically": false
+}
+```
+
+**If you want a paused ebook back on a given date, something has to call
+`reactivate_hold` on that date** — a scheduled agent task, a reminder, anything.
+Nothing server-side will do it. Check `resumes_automatically` rather than
+assuming the pause expires.
+
+Verified against a live account; details and the underlying policy flags are in
+[docs/GATEWAY.md](docs/GATEWAY.md).
 
 ### The read-only guardrail
 
