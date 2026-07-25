@@ -1,0 +1,128 @@
+{
+  "_comment": [
+    "SYNTHETIC holds state. Hand-written, not captured from a real account.",
+    "Real holds are personal data and must never be committed.",
+    "Field names and value shapes mirror what BiblioCommons returns at",
+    "GET /v2/holds -- numeric holdsId for physical, UUID for digital, and",
+    "state-dependent 'actions' arrays."
+  ],
+  "app": {
+    "apiGatewayURL": "https://gateway.bibliocommons.com/v2"
+  },
+  "library": {
+    "id": 30
+  },
+  "auth": {
+    "sessionId": "test-session-id",
+    "authToken": "test-auth-token",
+    "currentUserId": "9001"
+  },
+  "entities": {
+    "users": {
+      "9001": {
+        "id": "9001",
+        "accounts": ["acct-1"]
+      }
+    },
+    "accounts": {
+      "acct-1": {
+        "id": "acct-1",
+        "libraryId": 30
+      }
+    },
+    "holds": {
+      "70000001": {
+        "holdsId": "70000001",
+        "materialType": "PHYSICAL",
+        "status": "NOT_YET_AVAILABLE",
+        "holdsPosition": 12,
+        "holdPlacedDate": "2026-05-03",
+        "expiryDate": "2027-02-07",
+        "metadataId": "S30C1000001",
+        "bibTitle": "An Example Physical Book",
+        "itemId": "1000001",
+        "actions": ["cancel", "suspend"],
+        "pickupLocation": {
+          "code": "CEN",
+          "name": "Central Library",
+          "ips": []
+        }
+      },
+      "70000002": {
+        "holdsId": "70000002",
+        "materialType": "PHYSICAL",
+        "status": "READY_FOR_PICKUP",
+        "holdsPosition": 0,
+        "holdPlacedDate": "2026-06-11",
+        "expiryDate": "2026-08-01",
+        "metadataId": "S30C1000002",
+        "bibTitle": "A Book Waiting On The Shelf",
+        "itemId": "1000002",
+        "actions": ["cancel"],
+        "pickupLocation": {
+          "code": "BAL",
+          "name": "Ballard Branch",
+          "ips": []
+        }
+      },
+      "70000003": {
+        "holdsId": "70000003",
+        "materialType": "PHYSICAL",
+        "status": "SUSPENDED",
+        "holdsPosition": 4,
+        "holdPlacedDate": "2026-04-20",
+        "expiryDate": "2027-01-15",
+        "metadataId": "S30C1000003",
+        "bibTitle": "A Paused Physical Hold",
+        "itemId": "1000003",
+        "actions": ["cancel", "reactivate"],
+        "pickupLocation": {
+          "code": "CEN",
+          "name": "Central Library",
+          "ips": []
+        }
+      },
+      "9D52F3B0-0000-4000-8000-000000000001": {
+        "holdsId": "9D52F3B0-0000-4000-8000-000000000001",
+        "materialType": "DIGITAL",
+        "status": "READY_FOR_PICKUP",
+        "holdsPosition": 0,
+        "holdPlacedDate": "2025-08-25",
+        "expiryDate": "2026-08-04",
+        "metadataId": "S30C2000001",
+        "bibTitle": "An Example Ebook",
+        "actions": ["checkout", "cancel"]
+      },
+      "9D52F3B0-0000-4000-8000-000000000002": {
+        "holdsId": "9D52F3B0-0000-4000-8000-000000000002",
+        "materialType": "DIGITAL",
+        "status": "NOT_YET_AVAILABLE",
+        "holdsPosition": 37,
+        "holdPlacedDate": "2026-02-14",
+        "expiryDate": null,
+        "metadataId": "S30C2000002",
+        "bibTitle": "An Example Eaudiobook",
+        "actions": ["cancel", "suspend"]
+      }
+    }
+  },
+  "borrowing": {
+    "holds": {
+      "summary": {
+        "PHYSICAL": {
+          "NOT_YET_AVAILABLE": 1,
+          "READY_FOR_PICKUP": 1,
+          "SUSPENDED": 1
+        },
+        "DIGITAL": {
+          "NOT_YET_AVAILABLE": 1,
+          "READY_FOR_PICKUP": 1
+        }
+      }
+    },
+    "inactiveHolds": {
+      "cancelled": 0,
+      "expired": 0
+    }
+  }
+}

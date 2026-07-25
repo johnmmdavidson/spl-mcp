@@ -1,0 +1,38 @@
+# --- Secrets & local state: NEVER commit ---
+secrets.toml
+config.toml
+.env
+.env.*
+!secrets.example.toml
+!config.example.toml
+cookies.json
+*.cookies.json
+state/
+.spl-mcp/
+
+# --- Captured / raw scrape output (may contain personal data) ---
+scratch/
+raw/
+*.raw.html
+*.raw.json
+tests/fixtures/private/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- Editors / OS ---
+.DS_Store
+.idea/
+.vscode/
+*.swp

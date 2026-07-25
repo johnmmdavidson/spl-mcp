@@ -1,0 +1,44 @@
+# spl-mcp configuration.
+#
+# Copy to one of these locations (first one found wins):
+#   ./config.toml
+#   ~/.config/spl-mcp/config.toml
+#
+# Every value here can also be set with an env var (SPL_MCP_<UPPER_KEY>),
+# and the env var always wins. See docs in README.md.
+
+[library]
+# BiblioCommons library slug. Change this and the server works for any
+# BiblioCommons library, not just Seattle.
+slug = "seattle"
+base_url = "https://seattle.bibliocommons.com"
+gateway_url = "https://gateway.bibliocommons.com"
+
+[holds]
+# Branch code used by place_hold when no pickup_branch argument is given.
+# Look up your branch code from an existing hold via list_holds.
+default_pickup_branch = "CEN"
+
+[safety]
+# HARD GUARDRAIL. When true, place_hold / cancel_hold / suspend_hold /
+# reactivate_hold refuse at the code level and never touch the network.
+# Ships ON. Turn it off only when you actually want the agent to mutate holds.
+read_only = true
+
+[ebooks]
+# check_ebook_formats resolves Kindle availability through OverDrive's public
+# web API (thunder.api.overdrive.com) -- the same unauthenticated endpoint
+# spl.overdrive.com calls from a browser. Set false to disable that lookup;
+# the tool will then report Kindle status as "unknown" rather than guessing.
+use_overdrive_thunder = true
+overdrive_library = "spl"
+
+[http]
+timeout_seconds = 30.0
+# Sent on every request. Keep it honest and contactable -- this is a personal,
+# low-volume client and it should say so.
+user_agent = "spl-mcp/0.1 (personal library agent; +https://github.com/johnmmdavidson/spl-mcp)"
+
+[paths]
+# Where the session cookie jar lives. Never commit this file.
+cookie_store = "~/.local/state/spl-mcp/cookies.json"
