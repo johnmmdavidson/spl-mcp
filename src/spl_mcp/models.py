@@ -90,6 +90,9 @@ class Hold(BaseModel):
     queue_position: int | None = None
     placed: str | None = None
     expires: str | None = None
+    suspend_end_date: str | None = Field(
+        None, description="Date a suspended hold resumes; only present while SUSPENDED"
+    )
     bib_id: str | None = Field(None, description="Join key back into the catalog")
     actions: list[str] = Field(
         default_factory=list, description="Actions BiblioCommons currently offers for this hold"

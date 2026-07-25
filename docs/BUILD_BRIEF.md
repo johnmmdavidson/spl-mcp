@@ -151,7 +151,8 @@ plausibly have gotten `suspend` wrong: the `PATCH` endpoint accepts both
 changes when the *hold itself lapses*, not when a pause ends. See
 [GATEWAY.md](GATEWAY.md).
 
-No test hold was placed on anyone's account.
+No hold was placed to obtain the contract. (One was placed later, deliberately
+and with per-step confirmation, to *verify* the implementation — see A6.)
 
 ## A3. `check_ebook_formats` is unauthenticated, and BiblioCommons cannot answer it
 
@@ -182,7 +183,26 @@ served by fetching successive pages.
 
 ## A6. Status of the mutating paths
 
-The gateway contract is derived and implemented, but **has not been exercised
-against a live account**. The read paths are confirmed working end to end. Until
-one real mutation has been run, treat the four mutating tools as untested code.
-This is the main reason `read_only` ships engaged.
+All four were verified against John's live account on 2026-07-24, one confirmed
+step at a time, on Dune (36 copies, all out) so no physical copy was pulled from
+a shelf. The test hold was cancelled afterwards; no state was left behind. The
+run is tabulated in [GATEWAY.md](GATEWAY.md#status).
+
+It found three defects that no amount of offline testing would have caught:
+
+1. **`accountId` resolved to the wrong library's card.** `users[].accounts`
+   holds ints while `entities.accounts` is keyed by strings, so every lookup
+   missed; and the library field is `libId`, not `libraryId`. The resolver then
+   fell back to "the first account" and picked a card from a different library,
+   which the gateway rejected with a bare HTTP 500. The fallback was the real
+   defect and is gone: it now refuses rather than guesses.
+
+2. **Suspending without an end date is a silent no-op.** The gateway answers
+   HTTP 200 with an empty `failures` array and leaves the hold active. `until`
+   is now required.
+
+3. **`suspendEndDate` was missing** from the hold model.
+
+The second of those is the load-bearing argument for the post-mutation
+verification step: the gateway reported success for an operation it had not
+performed, and only re-reading the holds list caught it.

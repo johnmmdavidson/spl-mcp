@@ -56,15 +56,46 @@ hardcoded, a change on BiblioCommons' side is picked up automatically.
 
 ## `accountId`
 
-Several operations need the account id for the current user at this library.
+Every operation needs the account id for the current user **at this library**.
 The bundle's selector resolves it as:
 
 1. `auth.currentUserId` → the logged-in user id
 2. `entities.users[<currentUserId>].accounts` → account ids belonging to them
 3. `entities.accounts[<id>]` → pick the one matching `library.id`
 
-This server follows the same path, and fails loudly if it cannot resolve an
-account rather than sending a request without one.
+Two details here are easy to get wrong, and both were caught only by running it
+against a real account:
+
+- **`users[].accounts` holds integers, while `entities.accounts` is keyed by
+  strings.** Comparing them directly makes every lookup miss.
+- **The library field on an account is `libId`**, not `libraryId`.
+
+A patron can hold cards at several BiblioCommons libraries, and the page state
+carries all of them. Getting this wrong sends a hold for one library using
+another library's card, which the gateway answers with a bare **HTTP 500**.
+
+Accordingly this server **never falls back to "the first account"**. If it
+cannot identify exactly one account matching `library.id`, it raises and sends
+nothing.
+
+## Reading inactive holds
+
+Cancelled and expired holds are *not* in the `/v2/holds` page state —
+`borrowing.inactiveHolds` is an unpopulated lazy-load container
+(`{"fetching": false, "pagination": {}}`). They need their own gateway GET, and
+`accountId` is a **required query parameter**:
+
+```
+GET {api_base}/libraries/{slug}/holds?locale=en-US&accountId={id}&status=CANCELLED
+GET {api_base}/libraries/{slug}/holds?locale=en-US&accountId={id}&status=EXPIRED
+```
+
+Omitting `accountId` returns `422` with
+`{"error":{"fieldErrors":{"accountId":"Required"}}}`.
+
+Note that a cancelled hold is **re-keyed**: it comes back with a synthetic id
+like `-3440006629724615101-0-ephemeral`, not the `holdsId` it had while active.
+Don't try to match cancelled holds by their original id.
 
 ## Operations
 
@@ -109,20 +140,35 @@ one means every id succeeded.
 
 ```json
 {
-  "accountId": "…",
-  "holdIds": ["70000001"],
-  "suspended": { "status": true, "endDate": "2026-09-01" }
+  "accountId": 4000000030,
+  "holdIds": ["70000009"],
+  "suspended": { "status": true, "endDate": "2026-08-24" }
 }
 ```
 
 Reactivating sends `{"status": false}` and no `endDate`.
 
-> **The field that a request capture would have gotten wrong.** The same `PATCH`
+> **`endDate` is mandatory in practice.** A suspend sent without one is answered
+> with **HTTP 200 and an empty `failures` array** — and the hold's status never
+> changes. The gateway reports success for an operation it did not perform.
+> This is why `suspend_hold` requires `until`, and why every mutation here
+> re-reads the holds list rather than trusting the response.
+
+> **The field a request capture would have gotten wrong.** The same `PATCH`
 > endpoint also accepts a top-level `expiryDate`, which is the date the *hold
 > itself* expires — not the date a pause ends. The pause end date lives at
 > `suspended.endDate`. Setting `expiryDate` when you meant to schedule a
 > reactivation would silently change when the hold lapses. This server never
 > sends `expiryDate`.
+
+While suspended, the hold gains a `suspendEndDate` field and its `actions`
+become `["cancel", "updateSuspend", "activate"]` — note **`activate`**, not
+`reactivate`. Reactivating clears `suspendEndDate` and restores
+`["cancel", "suspend"]`.
+
+Suspending also causes BiblioCommons to push the hold's own `expiryDate` out
+(observed: `2027-04-30` → `2027-05-31`), which reverts on reactivation. That is
+the library's behaviour, not something this server sends.
 
 ## Verification
 
@@ -132,8 +178,22 @@ the hold moved. The tool result reports what the re-read saw.
 
 ## Status
 
-Derived from source and implemented; **the mutating paths have not yet been
-exercised against a live account.** The read paths (`getHolds`) are confirmed
-working. Until a real mutation has been run once, treat `place_hold`,
-`cancel_hold`, `suspend_hold`, and `reactivate_hold` as untested code — which is
-also why `read_only` ships engaged.
+**Verified end to end against a live account** on 2026-07-24, one confirmed step
+at a time, on a title with all copies checked out so no physical copy was pulled
+from a shelf:
+
+| Step | Result |
+|---|---|
+| `place_hold` | Hold created, queue position 17, `NOT_YET_AVAILABLE` |
+| `list_holds` | Appeared as `PHYSICAL` at the requested branch |
+| `suspend_hold` (no `endDate`) | **Silent no-op** — 200, no `failures`, status unchanged |
+| `suspend_hold` (`endDate` set) | `SUSPENDED`, `suspendEndDate` set, position 17 kept |
+| `reactivate_hold` | Back to `NOT_YET_AVAILABLE`, position 17 kept |
+| `cancel_hold` | Removed from active holds; appears under `status=CANCELLED` |
+
+The test hold was cancelled; no state was left on the account.
+
+Three defects were found and fixed in the process: the `accountId` resolution
+bug described above, the mandatory `endDate`, and a missing `suspendEndDate`
+field on the hold model. `read_only` still ships engaged — that is a deliberate
+default for a tool an agent can call, not a statement about maturity.

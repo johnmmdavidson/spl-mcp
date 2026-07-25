@@ -224,17 +224,18 @@ async def cancel_hold(
 
 @mcp.tool(
     description=(
-        "Pause a physical hold, keeping its queue position. Optionally give an "
-        "ISO date (YYYY-MM-DD) for when it should resume. Disabled while the "
-        "server is in read-only mode."
+        "Pause a physical hold until a given date, keeping its queue position. "
+        "'until' is required -- the library silently ignores a pause with no end "
+        "date, leaving the hold active. Disabled while the server is in "
+        "read-only mode."
     ),
     annotations={"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True},
 )
 async def suspend_hold(
     hold_id: Annotated[str, Field(description="Hold id from list_holds")],
     until: Annotated[
-        str | None, Field(description="ISO date (YYYY-MM-DD) the hold should resume")
-    ] = None,
+        str, Field(description="ISO date (YYYY-MM-DD) the hold should resume. Required.")
+    ],
 ) -> dict[str, Any]:
     try:
         result = await holds.suspend_hold(get_session(), get_config(), hold_id, until)

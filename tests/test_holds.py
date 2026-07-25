@@ -12,6 +12,7 @@ from spl_mcp.holds import (
     _guard,
     _require_physical,
     parse_holds,
+    suspend_hold,
 )
 from spl_mcp.models import Hold
 
@@ -117,6 +118,42 @@ class TestGatewayContext:
         }
         assert GatewayContext(state, Config()).account_id == "mine"
 
+    def test_multi_library_patron_gets_the_right_card(self):
+        """Regression: this shape sent a Seattle hold with another library's card.
+
+        Two real traps, both live-verified: `users[].accounts` holds ints while
+        `entities.accounts` is keyed by strings, and the library field is
+        `libId` -- not `libraryId`. Either one alone makes the match miss.
+        """
+        state = {
+            "app": {"apiGatewayURL": "https://gw/v2"},
+            "library": {"id": 30},
+            "auth": {"currentUserId": 4000000001},
+            "entities": {
+                "users": {"4000000001": {"accounts": [4000000082, 4000000030]}},
+                "accounts": {
+                    "4000000082": {"id": 4000000082, "libId": 82},
+                    "4000000030": {"id": 4000000030, "libId": 30},
+                },
+            },
+        }
+        # Must be the libId 30 card, and must keep its native int type.
+        assert GatewayContext(state, Config()).account_id == 4000000030
+
+    def test_refuses_to_guess_when_no_account_matches_the_library(self):
+        # Never fall back to "the first account": a wrong card is rejected by
+        # the gateway, and silently targeting someone's other library is worse.
+        state = {
+            "app": {"apiGatewayURL": "https://gw/v2"},
+            "library": {"id": 30},
+            "auth": {"currentUserId": 1},
+            "entities": {
+                "users": {"1": {"accounts": [11, 22]}},
+                "accounts": {"11": {"id": 11, "libId": 81}, "22": {"id": 22, "libId": 82}},
+            },
+        }
+        assert GatewayContext(state, Config()).account_id is None
+
     def test_auth_headers_only_sent_when_present(self, holds_state):
         headers = GatewayContext(holds_state, Config()).headers()
         assert headers["X-Session-Id"] == "test-session-id"
@@ -129,7 +166,7 @@ class TestGatewayContext:
 
     def test_refuses_to_send_without_an_account_id(self):
         ctx = GatewayContext({"app": {}, "auth": {}, "entities": {}}, Config())
-        with pytest.raises(ParseError, match="account id"):
+        with pytest.raises(ParseError, match="which library account"):
             ctx.require_account_id()
 
 
@@ -166,3 +203,51 @@ class TestGuardrails:
         hold = _find_hold(parse_holds(holds_state), "70000002")
         assert isinstance(hold, Hold)
         assert hold.status == "READY_FOR_PICKUP"
+
+
+class TestSuspendEndDate:
+    """`until` is required: the gateway 200s on an open-ended pause and ignores it."""
+
+    async def test_missing_until_is_rejected_before_any_request(self):
+        config = Config(read_only=False)
+        with pytest.raises(ValueError, match="required"):
+            await suspend_hold(None, config, "70000001", None)
+
+    async def test_blank_until_is_rejected(self):
+        config = Config(read_only=False)
+        with pytest.raises(ValueError, match="required"):
+            await suspend_hold(None, config, "70000001", "   ")
+
+    async def test_non_iso_date_is_rejected(self):
+        config = Config(read_only=False)
+        with pytest.raises(ValueError, match="ISO date"):
+            await suspend_hold(None, config, "70000001", "24 August")
+
+    async def test_past_date_is_rejected(self):
+        config = Config(read_only=False)
+        with pytest.raises(ValueError, match="future"):
+            await suspend_hold(None, config, "70000001", "2020-01-01")
+
+    async def test_read_only_still_wins_over_argument_validation(self):
+        # The guardrail must fire first, whatever the arguments look like.
+        with pytest.raises(ReadOnlyError):
+            await suspend_hold(None, Config(read_only=True), "70000001", None)
+
+    def test_suspend_end_date_is_surfaced_on_a_hold(self):
+        state = {
+            "entities": {
+                "holds": {
+                    "1": {
+                        "holdsId": "1",
+                        "materialType": "PHYSICAL",
+                        "status": "SUSPENDED",
+                        "suspendEndDate": "2026-08-24",
+                        "expiryDate": "2027-05-31",
+                    }
+                }
+            }
+        }
+        hold = parse_holds(state).physical[0]
+        # suspendEndDate (resume date) and expiryDate (hold lapses) are distinct.
+        assert hold.suspend_end_date == "2026-08-24"
+        assert hold.expires == "2027-05-31"

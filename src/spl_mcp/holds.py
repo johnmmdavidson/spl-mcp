@@ -43,6 +43,7 @@ def _parse_hold(hold_id: str, raw: dict[str, Any]) -> Hold:
         queue_position=raw.get("holdsPosition"),
         placed=raw.get("holdPlacedDate"),
         expires=raw.get("expiryDate"),
+        suspend_end_date=raw.get("suspendEndDate"),
         bib_id=raw.get("metadataId"),
         # Actions are state-dependent -- a SUSPENDED hold offers different ones
         # than a NOT_YET_AVAILABLE one -- so we report what the account actually
@@ -133,28 +134,46 @@ class GatewayContext:
         self.account_id = self._resolve_account_id(state)
 
     @staticmethod
-    def _resolve_account_id(state: dict[str, Any]) -> str | None:
-        """Mirror the frontend's selector: user -> their accounts -> this library."""
+    def _resolve_account_id(state: dict[str, Any]) -> Any | None:
+        """Mirror the frontend's selector: user -> their accounts -> this library.
+
+        A patron can hold cards at several BiblioCommons libraries, and the
+        page state carries all of them. Picking the wrong one gets the request
+        rejected outright, so this never falls back to "the first account" --
+        if the right one cannot be identified it returns None and the caller
+        refuses to send anything.
+        """
         user_id = dig(state, "auth.currentUserId", default=None)
         users = dig(state, "entities.users", default={}) or {}
         accounts = dig(state, "entities.accounts", default={}) or {}
         library_id = dig(state, "library.id", default=None)
 
         user = users.get(str(user_id)) if user_id is not None else None
-        if user is None and users:
+        if user is None and len(users) == 1:
             user = next(iter(users.values()))
 
-        candidate_ids = list((user or {}).get("accounts") or []) or list(accounts)
-        candidates = [accounts[a] for a in candidate_ids if a in accounts]
+        # users[].accounts holds ints while entities.accounts is keyed by
+        # string; compare as strings or every lookup misses.
+        raw_ids = list((user or {}).get("accounts") or []) or list(accounts)
+        candidates = [accounts[str(a)] for a in raw_ids if str(a) in accounts]
+
+        def account_library(acct: dict[str, Any]) -> Any:
+            # 'libId' is the live field name; the others are defensive.
+            for field in ("libId", "libraryId", "library"):
+                if field in acct:
+                    return acct[field]
+            return None
 
         if library_id is not None:
-            for acct in candidates:
-                if acct.get("libraryId") == library_id or acct.get("library") == library_id:
-                    return str(acct.get("id"))
+            matched = [a for a in candidates if account_library(a) == library_id]
+            if len(matched) == 1:
+                return matched[0].get("id")
+            if len(matched) > 1:
+                return None  # ambiguous: refuse rather than guess
+
+        # Only safe to assume when there is genuinely nothing to choose between.
         if len(candidates) == 1:
-            return str(candidates[0].get("id"))
-        if candidate_ids:
-            return str(candidate_ids[0])
+            return candidates[0].get("id")
         return None
 
     @property
@@ -175,12 +194,15 @@ class GatewayContext:
             h["X-Access-Token"] = str(self.auth_token)
         return h
 
-    def require_account_id(self) -> str:
-        if not self.account_id:
+    def require_account_id(self) -> Any:
+        if self.account_id is None:
             raise ParseError(
-                "could not resolve the library account id from the authenticated page state "
-                "(looked at auth.currentUserId -> entities.users -> entities.accounts). "
-                "Refusing to send a hold request without it."
+                "could not identify which library account to act on. Walked "
+                "auth.currentUserId -> entities.users -> entities.accounts and found no "
+                "single account matching library.id "
+                f"({dig(self.state, 'library.id', default='unknown')}). If you hold cards at "
+                "several BiblioCommons libraries, this server will not guess between them. "
+                "Refusing to send a hold request."
             )
         return self.account_id
 
@@ -375,28 +397,34 @@ async def suspend_hold(
     session: SplSession,
     config: Config,
     hold_id: str,
-    until: date | str | None = None,
+    until: date | str,
 ) -> HoldActionResult:
-    """Pause a physical hold, optionally until a given date.
+    """Pause a physical hold until a given date. Keeps queue position.
 
-    Keeps queue position while paused. ``until`` is the date the hold resumes.
+    ``until`` is **required**. Verified against the live gateway: a suspend sent
+    without an ``endDate`` is answered with HTTP 200 and an empty ``failures``
+    list, but the hold's status never changes. Accepting an open-ended pause
+    would mean reporting a success that did not happen.
     """
     _guard(config, "suspend_hold")
     hold_id = str(hold_id or "").strip()
     if not hold_id:
         raise ValueError("hold_id must not be empty")
 
-    end_date: str | None = None
-    if until is not None:
-        end_date = until.isoformat() if isinstance(until, date) else str(until).strip()
-        try:
-            parsed = date.fromisoformat(end_date)
-        except ValueError as exc:
-            raise ValueError(
-                f"'until' must be an ISO date (YYYY-MM-DD), got {end_date!r}"
-            ) from exc
-        if parsed <= date.today():
-            raise ValueError(f"'until' must be in the future, got {end_date}")
+    if until is None or (isinstance(until, str) and not until.strip()):
+        raise ValueError(
+            "'until' is required: BiblioCommons accepts a suspend with no end date but "
+            "silently ignores it, leaving the hold active. Give an ISO date (YYYY-MM-DD) "
+            "for when the hold should resume."
+        )
+
+    end_date = until.isoformat() if isinstance(until, date) else str(until).strip()
+    try:
+        parsed = date.fromisoformat(end_date)
+    except ValueError as exc:
+        raise ValueError(f"'until' must be an ISO date (YYYY-MM-DD), got {end_date!r}") from exc
+    if parsed <= date.today():
+        raise ValueError(f"'until' must be in the future, got {end_date}")
 
     ctx, before = await _gateway(session, config)
     hold = _find_hold(before, hold_id)
@@ -404,9 +432,7 @@ async def suspend_hold(
 
     # suspended is an object, not a boolean; endDate is the resume date and is
     # a different field from the hold's own expiryDate. See docs/GATEWAY.md.
-    suspended: dict[str, Any] = {"status": True}
-    if end_date:
-        suspended["endDate"] = end_date
+    suspended: dict[str, Any] = {"status": True, "endDate": end_date}
 
     payload = await _call_gateway(
         session,

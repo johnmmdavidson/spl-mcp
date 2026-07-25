@@ -23,7 +23,7 @@ Raspberry Pi.
 | `list_holds()` | yes | All holds — physical in full detail, digital status-only |
 | `place_hold(bib_id, pickup_branch=None)` | yes | **Physical only.** Mutating |
 | `cancel_hold(hold_id)` | yes | **Physical only.** Mutating |
-| `suspend_hold(hold_id, until=None)` | yes | **Physical only.** Mutating |
+| `suspend_hold(hold_id, until)` | yes | **Physical only.** Mutating. `until` is required |
 | `reactivate_hold(hold_id)` | yes | **Physical only.** Mutating |
 
 **Digital (ebook / eaudiobook) holds are deliberately read-only.** You can see
