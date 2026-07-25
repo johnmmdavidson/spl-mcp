@@ -36,11 +36,15 @@ one entry per edition (physical book, large print, audio CD, ebook,
 eaudiobook). Use the `bib_id` of the specific format you want -- `place_hold`
 takes a format's bib_id, not the work's.
 
-Holds on physical items can be placed, cancelled, suspended, and reactivated.
-Digital (ebook and eaudiobook) holds are read-only here: `list_holds` shows
-them, but they must be managed in Libby or on the library website.
+Holds can be placed, cancelled, suspended, and reactivated -- physical and
+digital (ebook / eaudiobook) alike, with no difference in how you call them.
+Digital holds have no pickup branch; you are emailed when the loan is ready.
 
-Mutating tools are disabled unless the server is configured with
+What a given hold permits depends on its current state, and `list_holds`
+reports that per hold in its `actions` list. A hold that is ready for pickup,
+for instance, can be cancelled but not suspended.
+
+Mutating tools are disabled entirely unless the server is configured with
 read_only = false, in which case they will say so plainly.
 """.strip()
 
@@ -185,15 +189,23 @@ async def list_holds() -> dict[str, Any]:
 
 @mcp.tool(
     description=(
-        "Place a hold on a PHYSICAL item, given that format's bib id. Digital "
-        "items are not supported. Disabled while the server is in read-only mode."
+        "Place a hold on an item, given that format's bib id. Works for both "
+        "physical and digital items. pickup_branch applies to physical items "
+        "only -- digital holds notify you by email instead. Disabled while the "
+        "server is in read-only mode."
     ),
     annotations={"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True},
 )
 async def place_hold(
-    bib_id: Annotated[str, Field(description="Bib id of the physical format to hold")],
+    bib_id: Annotated[str, Field(description="Bib id of the format to hold")],
     pickup_branch: Annotated[
-        str | None, Field(description="Branch code; defaults to the configured branch")
+        str | None,
+        Field(
+            description=(
+                "Branch code for physical items; defaults to the configured branch. "
+                "Must be omitted for digital items."
+            )
+        ),
     ] = None,
 ) -> dict[str, Any]:
     try:
@@ -205,8 +217,8 @@ async def place_hold(
 
 @mcp.tool(
     description=(
-        "Cancel a physical hold by its hold id (from list_holds). Digital holds "
-        "are not supported. Disabled while the server is in read-only mode."
+        "Cancel a hold by its hold id (from list_holds). Works for physical and "
+        "digital holds. Disabled while the server is in read-only mode."
     ),
     annotations={"readOnlyHint": False, "destructiveHint": True, "openWorldHint": True},
 )
@@ -222,10 +234,10 @@ async def cancel_hold(
 
 @mcp.tool(
     description=(
-        "Pause a physical hold until a given date, keeping its queue position. "
-        "'until' is required -- the library silently ignores a pause with no end "
-        "date, leaving the hold active. Disabled while the server is in "
-        "read-only mode."
+        "Pause a hold until a given date, keeping its queue position. Works for "
+        "physical and digital holds. 'until' is required -- the library silently "
+        "ignores a pause with no end date, leaving the hold active. Disabled "
+        "while the server is in read-only mode."
     ),
     annotations={"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True},
 )
@@ -244,8 +256,8 @@ async def suspend_hold(
 
 @mcp.tool(
     description=(
-        "Resume a suspended physical hold. Disabled while the server is in "
-        "read-only mode."
+        "Resume a suspended hold, physical or digital. Disabled while the "
+        "server is in read-only mode."
     ),
     annotations={"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True},
 )

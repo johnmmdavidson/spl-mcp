@@ -10,7 +10,7 @@ from spl_mcp.holds import (
     GatewayContext,
     _find_hold,
     _guard,
-    _require_physical,
+    _require_action,
     parse_holds,
     suspend_hold,
 )
@@ -169,6 +169,35 @@ class TestGatewayContext:
         with pytest.raises(ParseError, match="which library account"):
             ctx.require_account_id()
 
+    def test_reads_the_digital_notification_email_from_the_account(self, holds_state):
+        # Digital holds require an email. The library already has one on file,
+        # so we read it rather than asking the user to supply it.
+        assert GatewayContext(holds_state, Config()).notification_email == (
+            "reader@example.invalid"
+        )
+
+    def test_notification_email_is_none_when_unset(self, holds_state):
+        del holds_state["entities"]["accounts"]["acct-1"]["digitalNotificationEmail"]
+        assert GatewayContext(holds_state, Config()).notification_email is None
+
+    def test_notification_email_comes_from_the_matched_account(self):
+        # Must follow the resolved account, not just any account on the profile.
+        state = {
+            "app": {"apiGatewayURL": "https://gw/v2"},
+            "library": {"id": 30},
+            "auth": {"currentUserId": 1},
+            "entities": {
+                "users": {"1": {"accounts": [11, 22]}},
+                "accounts": {
+                    "11": {"id": 11, "libId": 82, "digitalNotificationEmail": "wrong@x.invalid"},
+                    "22": {"id": 22, "libId": 30, "digitalNotificationEmail": "right@x.invalid"},
+                },
+            },
+        }
+        ctx = GatewayContext(state, Config())
+        assert ctx.account_id == 22
+        assert ctx.notification_email == "right@x.invalid"
+
 
 class TestGuardrails:
     @pytest.mark.parametrize(
@@ -187,13 +216,37 @@ class TestGuardrails:
     def test_guard_passes_when_read_only_is_off(self):
         _guard(Config(read_only=False), "place_hold")  # must not raise
 
-    def test_digital_holds_are_refused_for_mutation(self, holds_state):
+    def test_digital_holds_are_mutable_like_physical_ones(self, holds_state):
+        # read_only is the ONLY gate on changing a hold. There is no
+        # material-type carve-out: a digital hold offering "cancel" can be
+        # cancelled exactly as a physical one can.
         digital = parse_holds(holds_state).digital[0]
-        with pytest.raises(NotSupportedError, match="digital"):
-            _require_physical(digital, "cancel_hold")
+        assert "cancel" in digital.actions
+        _require_action(digital, "cancel", tool="cancel_hold")
 
-    def test_physical_holds_pass_the_material_check(self, holds_state):
-        _require_physical(parse_holds(holds_state).physical[0], "cancel_hold")
+    def test_physical_holds_pass_the_capability_check(self, holds_state):
+        _require_action(parse_holds(holds_state).physical[0], "cancel", tool="cancel_hold")
+
+    def test_action_not_offered_is_refused_before_any_request(self, holds_state):
+        # A READY_FOR_PICKUP hold offers only "cancel" -- suspending it is not
+        # on the table, and we say so rather than letting the gateway 500.
+        ready = next(h for h in parse_holds(holds_state).physical if h.status == "READY_FOR_PICKUP")
+        assert "suspend" not in ready.actions
+        with pytest.raises(NotSupportedError, match="not available"):
+            _require_action(ready, "suspend", tool="suspend_hold")
+
+    def test_reactivate_checks_for_activate_not_reactivate(self, holds_state):
+        # BiblioCommons names the resume action "activate"; a suspended hold
+        # exposes that, never "reactivate".
+        suspended = next(
+            h for h in parse_holds(holds_state).physical if h.status == "SUSPENDED"
+        )
+        with pytest.raises(NotSupportedError):
+            _require_action(suspended, "activate", tool="reactivate_hold")
+
+    def test_missing_actions_list_defers_to_the_gateway(self):
+        # With nothing to check against, don't invent a refusal.
+        _require_action(Hold(hold_id="1", actions=[]), "cancel", tool="cancel_hold")
 
     def test_unknown_hold_id_is_rejected_before_any_request(self, holds_state):
         with pytest.raises(ValueError, match="no hold with id"):

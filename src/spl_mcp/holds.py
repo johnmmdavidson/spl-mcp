@@ -8,9 +8,11 @@ click on the record page's "Place hold" button throws a client-side error and
 never sends the request, because the SPA expects state the click bypasses. The
 gateway contract is documented in ``docs/GATEWAY.md``.
 
-Scope note: **digital holds are deliberately read-only here.** BiblioCommons
-does expose ``cancel`` on them, so this is a product decision rather than a
-technical limit.
+Physical and digital holds are treated identically: ``read_only`` is the one
+switch governing whether anything can be changed, with no material-type
+carve-out. What actually differs between them is not policy but what
+BiblioCommons offers on a given hold, which the state-dependent ``actions``
+array reports and :func:`_require_action` checks.
 """
 
 from __future__ import annotations
@@ -132,6 +134,7 @@ class GatewayContext:
         self.session_id = dig(state, "auth.sessionId", default=None)
         self.auth_token = dig(state, "auth.authToken", default=None)
         self.account_id = self._resolve_account_id(state)
+        self.notification_email = self._resolve_notification_email(state, self.account_id)
 
     @staticmethod
     def _resolve_account_id(state: dict[str, Any]) -> Any | None:
@@ -175,6 +178,20 @@ class GatewayContext:
         if len(candidates) == 1:
             return candidates[0].get("id")
         return None
+
+    @staticmethod
+    def _resolve_notification_email(state: dict[str, Any], account_id: Any) -> str | None:
+        """Digital holds require a notification email; the account already has one.
+
+        BiblioCommons' own dialog pre-fills this field from
+        ``entities.accounts[].digitalNotificationEmail``, so we read the same
+        place rather than asking the user for something the library already knows.
+        """
+        if account_id is None:
+            return None
+        account = (dig(state, "entities.accounts", default={}) or {}).get(str(account_id)) or {}
+        email = account.get("digitalNotificationEmail")
+        return str(email) if email else None
 
     @property
     def holds_url(self) -> str:
@@ -244,12 +261,21 @@ def _guard(config: Config, tool: str) -> None:
         raise ReadOnlyError(tool)
 
 
-def _require_physical(hold: Hold, action: str) -> None:
-    if (hold.material_type or "").upper() == "DIGITAL":
+def _require_action(hold: Hold, action: str, *, tool: str) -> None:
+    """Check the hold actually offers this action before asking for it.
+
+    Physical and digital holds are treated identically -- ``read_only`` is the
+    single gate on changing anything. What differs between them is not policy
+    but what BiblioCommons offers per hold, which is exactly what the
+    state-dependent ``actions`` array reports.
+    """
+    if not hold.actions:
+        return  # nothing to check against; let the gateway have the last word
+    if action not in hold.actions:
         raise NotSupportedError(
-            f"{action} is not supported for digital holds. '{hold.title or hold.hold_id}' is a "
-            "digital (ebook/audiobook) hold, and spl-mcp keeps digital holds read-only by "
-            "design. Manage it in Libby or on the library website."
+            f"{tool} is not available for hold {hold.hold_id} "
+            f"({hold.title or 'untitled'}, status {hold.status}). "
+            f"BiblioCommons currently offers: {', '.join(hold.actions) or 'nothing'}."
         )
 
 
@@ -257,9 +283,9 @@ def _find_hold(holds: HoldsList, hold_id: str) -> Hold:
     for hold in [*holds.physical, *holds.digital]:
         if hold.hold_id == hold_id:
             return hold
-    known = ", ".join(h.hold_id for h in holds.physical[:8]) or "none"
+    known = ", ".join(h.hold_id for h in [*holds.physical, *holds.digital][:8]) or "none"
     raise ValueError(
-        f"no hold with id {hold_id!r} is on the account. Current physical hold ids: {known}. "
+        f"no hold with id {hold_id!r} is on the account. Current hold ids: {known}. "
         "Call list_holds to see what is actually there."
     )
 
@@ -273,7 +299,7 @@ async def place_hold(
     bib_id: str,
     pickup_branch: str | None = None,
 ) -> HoldActionResult:
-    """Place a hold on a physical item."""
+    """Place a hold on a physical or digital item."""
     _guard(config, "place_hold")
     bib_id = (bib_id or "").strip()
     if not bib_id:
@@ -287,26 +313,33 @@ async def place_hold(
     brief = bib.get("briefInfo") or {}
     material_type = policy.get("materialType")
 
-    if material_type != "PHYSICAL":
+    if material_type not in ("PHYSICAL", "DIGITAL"):
         raise NotSupportedError(
-            f"{bib_id} is a {material_type or 'non-physical'} item "
-            f"({brief.get('format')}). spl-mcp only places holds on physical items; "
-            "digital holds are read-only by design."
+            f"{bib_id} has material type {material_type!r}, which this server does not "
+            f"know how to place a hold on ({brief.get('format')})."
         )
     if not policy.get("holdable", False):
         raise NotSupportedError(
             f"{bib_id} ({brief.get('title')!r}) is not holdable according to the catalog."
         )
 
-    branch = pickup_branch or config.default_pickup_branch
-    if not branch:
+    is_digital = material_type == "DIGITAL"
+    branch = None
+    if not is_digital:
+        branch = pickup_branch or config.default_pickup_branch
+        if not branch:
+            raise ValueError(
+                "no pickup branch given and no default configured. Pass pickup_branch, or set "
+                "holds.default_pickup_branch in config.toml."
+            )
+    elif pickup_branch:
         raise ValueError(
-            "no pickup branch given and no default configured. Pass pickup_branch, or set "
-            "holds.default_pickup_branch in config.toml."
+            f"{bib_id} is a digital item, which has no pickup branch. "
+            "Omit pickup_branch for ebooks and eaudiobooks."
         )
 
     ctx, before = await _gateway(session, config)
-    already = next((h for h in before.physical if h.bib_id == bib_id), None)
+    already = next((h for h in [*before.physical, *before.digital] if h.bib_id == bib_id), None)
     if already is not None:
         return HoldActionResult(
             ok=True,
@@ -320,21 +353,36 @@ async def place_hold(
             detail={"already_held": True, "status": already.status},
         )
 
+    # The two material types take different materialParams, mirroring the two
+    # dialogs in BiblioCommons' own UI: a branch for physical, a notification
+    # address for digital (OverDrive emails you when the loan is ready).
+    if is_digital:
+        email = ctx.notification_email
+        if not email:
+            raise ParseError(
+                "digital holds require a notification email and none is set on the account "
+                "(entities.accounts[].digitalNotificationEmail was empty). Set one in your "
+                "library account preferences, then retry."
+            )
+        material_params: dict[str, Any] = {"email": email, "format": None}
+    else:
+        material_params = {"branchId": branch, "errorMessageLocale": LOCALE}
+
     payload = await _call_gateway(
         session,
         ctx,
         "POST",
         {
             "metadataId": bib_id,
-            "materialType": "PHYSICAL",
+            "materialType": material_type,
             "accountId": ctx.require_account_id(),
             "enableSingleClickHolds": False,
-            "materialParams": {"branchId": branch, "errorMessageLocale": LOCALE},
+            "materialParams": material_params,
         },
     )
 
     after = await list_holds(session, config)
-    placed = next((h for h in after.physical if h.bib_id == bib_id), None)
+    placed = next((h for h in [*after.physical, *after.digital] if h.bib_id == bib_id), None)
     if placed is None:
         raise UpstreamError(
             f"the gateway accepted the hold on {bib_id} but it does not appear in the holds "
@@ -347,15 +395,24 @@ async def place_hold(
         hold_id=placed.hold_id,
         bib_id=bib_id,
         message=(
-            f"Placed a hold on {placed.title!r} for pickup at "
-            f"{placed.pickup_branch or branch}. Queue position: {placed.queue_position}."
+            f"Placed a hold on {placed.title!r}"
+            + (
+                f". You will be emailed at {ctx.notification_email} when it is ready"
+                if is_digital
+                else f" for pickup at {placed.pickup_branch or branch}"
+            )
+            + f". Queue position: {placed.queue_position}."
         ),
-        detail={"queue_position": placed.queue_position, "status": placed.status},
+        detail={
+            "queue_position": placed.queue_position,
+            "status": placed.status,
+            "material_type": placed.material_type,
+        },
     )
 
 
 async def cancel_hold(session: SplSession, config: Config, hold_id: str) -> HoldActionResult:
-    """Cancel a physical hold."""
+    """Cancel a hold."""
     _guard(config, "cancel_hold")
     hold_id = str(hold_id or "").strip()
     if not hold_id:
@@ -363,7 +420,7 @@ async def cancel_hold(session: SplSession, config: Config, hold_id: str) -> Hold
 
     ctx, before = await _gateway(session, config)
     hold = _find_hold(before, hold_id)
-    _require_physical(hold, "cancel_hold")
+    _require_action(hold, "cancel", tool="cancel_hold")
 
     payload = await _call_gateway(
         session,
@@ -377,7 +434,7 @@ async def cancel_hold(session: SplSession, config: Config, hold_id: str) -> Hold
     )
 
     after = await list_holds(session, config)
-    if any(h.hold_id == hold_id for h in after.physical):
+    if any(h.hold_id == hold_id for h in [*after.physical, *after.digital]):
         raise UpstreamError(
             f"the gateway accepted the cancellation of hold {hold_id} but it is still on the "
             f"account. Gateway said: {payload}."
@@ -399,7 +456,7 @@ async def suspend_hold(
     hold_id: str,
     until: date | str,
 ) -> HoldActionResult:
-    """Pause a physical hold until a given date. Keeps queue position.
+    """Pause a hold until a given date. Keeps queue position.
 
     ``until`` is **required**. Verified against the live gateway: a suspend sent
     without an ``endDate`` is answered with HTTP 200 and an empty ``failures``
@@ -428,7 +485,7 @@ async def suspend_hold(
 
     ctx, before = await _gateway(session, config)
     hold = _find_hold(before, hold_id)
-    _require_physical(hold, "suspend_hold")
+    _require_action(hold, "suspend", tool="suspend_hold")
 
     # suspended is an object, not a boolean; endDate is the resume date and is
     # a different field from the hold's own expiryDate. See docs/GATEWAY.md.
@@ -467,7 +524,7 @@ async def suspend_hold(
 async def reactivate_hold(
     session: SplSession, config: Config, hold_id: str
 ) -> HoldActionResult:
-    """Resume a suspended physical hold."""
+    """Resume a suspended hold."""
     _guard(config, "reactivate_hold")
     hold_id = str(hold_id or "").strip()
     if not hold_id:
@@ -475,7 +532,7 @@ async def reactivate_hold(
 
     ctx, before = await _gateway(session, config)
     hold = _find_hold(before, hold_id)
-    _require_physical(hold, "reactivate_hold")
+    _require_action(hold, "activate", tool="reactivate_hold")
 
     payload = await _call_gateway(
         session,

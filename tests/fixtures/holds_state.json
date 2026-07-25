@@ -27,7 +27,8 @@
     "accounts": {
       "acct-1": {
         "id": "acct-1",
-        "libraryId": 30
+        "libraryId": 30,
+        "digitalNotificationEmail": "reader@example.invalid"
       }
     },
     "holds": {

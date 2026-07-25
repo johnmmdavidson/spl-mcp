@@ -109,8 +109,8 @@ the POST. **Do not automate the UI.**
   copy is pulled from a shelf, and cancel immediately after.
 
 **Note on digital scope:** BiblioCommons exposes `cancel` on digital holds, so
-digital mutation is *technically* possible. **The product decision is to keep
-digital strictly read-only.** It's a choice, not a technical limit.
+digital mutation is *technically* possible. The brief's product decision was to
+keep digital strictly read-only. **That decision was later reversed — see A7.**
 
 ---
 
@@ -194,6 +194,30 @@ would reasonably tell the user a hold cannot be paused when it can.
 Whether a given hold can be paused is answered by that hold's own `actions`
 array, which `list_holds` returns -- consistent with §3.6's instruction to read
 actions per hold rather than assuming.
+
+## A4c. Digital holds are mutable too — one switch, no carve-out
+
+The brief kept digital holds read-only as a deliberate product decision (§6),
+implemented as a hardcoded refusal while physical holds were gated by the
+`read_only` config flag. That left two different mechanisms expressing one idea,
+which is confusing: a flag you can see and a rule you cannot.
+
+Reversed. `read_only` is now the single gate on changing *anything*, and the
+four tools behave identically for both material types.
+
+Nothing about this was a technical constraint:
+
+- `cancel`, `suspend`, `activate` are byte-identical between the two — the
+  digital holds on a real account expose exactly the same `actions` vocabulary.
+- `place` is the one genuine difference: digital titles set
+  `requiresEmailDuringHold`, so the request carries
+  `materialParams: {email, format}` instead of `{branchId, errorMessageLocale}`.
+  The email is read from the account rather than asked for.
+
+The material-type refusal was replaced by a *capability* check against the
+hold's own `actions` list, which is a better guard anyway: it catches "you
+cannot suspend a hold that is ready for pickup" as well, which the old
+physical/digital split never did.
 
 ## A5. Search pagination
 

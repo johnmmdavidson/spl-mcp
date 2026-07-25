@@ -20,15 +20,23 @@ Raspberry Pi.
 | `search_titles(query, limit=10)` | no | Catalog search, results grouped across formats |
 | `get_title(bib_id)` | no | Full detail for one catalog record |
 | `check_ebook_formats(bib_id)` | no | Is the ebook available for Kindle? |
-| `list_holds()` | yes | All holds — physical in full detail, digital status-only |
-| `place_hold(bib_id, pickup_branch=None)` | yes | **Physical only.** Mutating |
-| `cancel_hold(hold_id)` | yes | **Physical only.** Mutating |
-| `suspend_hold(hold_id, until)` | yes | **Physical only.** Mutating. `until` is required |
-| `reactivate_hold(hold_id)` | yes | **Physical only.** Mutating |
+| `list_holds()` | yes | All holds — physical and digital |
+| `place_hold(bib_id, pickup_branch=None)` | yes | Mutating. `pickup_branch` is physical-only |
+| `cancel_hold(hold_id)` | yes | Mutating |
+| `suspend_hold(hold_id, until)` | yes | Mutating. `until` is required |
+| `reactivate_hold(hold_id)` | yes | Mutating |
 
-**Digital (ebook / eaudiobook) holds are deliberately read-only.** You can see
-them; the server will not place, cancel, or suspend them. That is a product
-decision, not a technical limit — BiblioCommons does expose those actions.
+Physical and digital (ebook / eaudiobook) holds are treated identically. There
+is **one** switch governing whether the agent can change anything —
+`read_only` — with no material-type carve-out.
+
+The differences that remain are real ones, not policy: a digital hold has no
+pickup branch (you're emailed when the loan is ready), and its notification
+address is read from your library account rather than asked for.
+
+What any individual hold permits depends on its state, which `list_holds`
+reports per hold in `actions`. A hold that's ready for pickup can be cancelled
+but not suspended, and the server checks that before sending anything.
 
 ### The read-only guardrail
 
@@ -57,7 +65,8 @@ page never displays (copy counts, hold queues, per-format holdability).
   login page first. Cookies persist to disk, so a session survives restarts and
   logins are rare.
 - **Holds** are one authenticated `GET /v2/holds`; physical and digital arrive
-  together, discriminated by `materialType`.
+  together, discriminated by `materialType`. Cancelled and expired holds need a
+  separate request — see [docs/GATEWAY.md](docs/GATEWAY.md).
 - **Mutations** go to the JSON holds gateway directly, never by driving the UI.
 - **Kindle availability** is resolved through OverDrive's public web API
   (`thunder.api.overdrive.com`) — the same unauthenticated endpoint

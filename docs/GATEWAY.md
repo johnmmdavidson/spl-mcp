@@ -114,9 +114,33 @@ Don't try to match cancelled holds by their original id.
 }
 ```
 
+`materialParams` differs by material type, mirroring the two dialogs in
+BiblioCommons' own UI. For a **digital** item:
+
+```json
+{
+  "metadataId": "S30C2949104",
+  "materialType": "DIGITAL",
+  "accountId": 4000000030,
+  "enableSingleClickHolds": false,
+  "materialParams": { "email": "you@example.com", "format": null }
+}
+```
+
+Digital titles have `requiresEmailDuringHold: true` — OverDrive emails you when
+the loan is ready. The address does not need to be asked for: it is already on
+the account at `entities.accounts[].digitalNotificationEmail`, which is exactly
+what the library's own dialog pre-fills the field with. `format` may be null
+unless the title sets `requiresFormatDuringHold`.
+
 There is a second variant (`placeItemHold`) that adds `materialParams.itemIds`
 for item-level holds. This server does not use it — SPL's physical policy has
 `itemLevelHoldsPredetermined: true`, so a bib-level hold is correct.
+
+Recovering the digital shape needed a lazily-loaded chunk rather than the main
+bundle: webpack chunk 15,
+`app.app-components-Workflow-WorkflowContainer_<hash>.js`, whose hash is in the
+chunk map inside `app.main_*.js`.
 
 Success looks like `{"successCount": 1, "entities": {"holds": {…}}}`, and the
 new hold's `holdsPosition` is the queue position.
@@ -191,7 +215,21 @@ from a shelf:
 | `reactivate_hold` | Back to `NOT_YET_AVAILABLE`, position 17 kept |
 | `cancel_hold` | Removed from active holds; appears under `status=CANCELLED` |
 
-The test hold was cancelled; no state was left on the account.
+A second run covered the **digital** path on an ebook with 73 holders ahead, so
+no loan was triggered:
+
+| Step | Result |
+|---|---|
+| `place_hold` (DIGITAL) | Hold created, queue position 75, UUID id, `actions: [cancel, suspend]` |
+| `cancel_hold` (DIGITAL) | Removed from active holds |
+
+Both test holds were cancelled; no state was left on the account.
+
+Digital `suspend` / `reactivate` have **not** been exercised by this server. The
+request shape is identical to the physical path (the operation is keyed on
+`holdIds`, not material type), and digital holds do reach a `SUSPENDED` state
+with `updateSuspend` / `activate` in their actions — but that is inference, not
+a verified run.
 
 Three defects were found and fixed in the process: the `accountId` resolution
 bug described above, the mandatory `endDate`, and a missing `suspendEndDate`
