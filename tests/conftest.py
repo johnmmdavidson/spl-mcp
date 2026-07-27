@@ -25,3 +25,8 @@ def record_ebook_state() -> dict:
 @pytest.fixture
 def holds_state() -> dict:
     return load_fixture("holds_state.json")
+
+
+@pytest.fixture
+def checkouts_state() -> dict:
+    return load_fixture("checkouts_state.json")

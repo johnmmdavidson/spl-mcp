@@ -103,6 +103,13 @@ class Config:
         return f"{self.base_url}/v2/holds"
 
     @property
+    def checkouts_url(self) -> str:
+        # /v2/checkouts and /v2/borrowing/checkedout also return 200 with a
+        # valid app state, but with an empty entities.checkouts. This is the
+        # only path that actually carries the loans.
+        return f"{self.base_url}/v2/checkedout"
+
+    @property
     def holds_gateway_url(self) -> str:
         return f"{self.gateway_url}/v2/libraries/{self.slug}/holds"
 

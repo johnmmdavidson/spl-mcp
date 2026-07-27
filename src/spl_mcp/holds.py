@@ -23,7 +23,7 @@ from typing import Any
 
 from .config import Config
 from .errors import NotSupportedError, ParseError, ReadOnlyError, UpstreamError
-from .models import Hold, HoldActionResult, HoldsList, HoldsSummary
+from .models import Hold, HoldActionResult, HoldsList, HoldsSummary, ReadyItem, ReadyToBorrow
 from .session import SplSession
 from .state import dig, extract_state
 
@@ -103,6 +103,84 @@ def parse_holds(state: dict[str, Any], *, url: str | None = None) -> HoldsList:
     )
 
 
+READY_STATUS = "READY_FOR_PICKUP"
+
+
+def parse_ready_to_borrow(
+    state: dict[str, Any], config: Config, *, url: str | None = None
+) -> ReadyToBorrow:
+    """Holds that are waiting on you right now, annotated with what to do.
+
+    Two date fields are easy to confuse and mean different things:
+
+    * ``pickupByDate`` -- the deadline to collect a physical hold. This is the
+      one that matters when a hold is ready, and it is a **dedicated field**.
+    * ``expiryDate`` -- when the *hold itself* lapses in the queue.
+
+    The library's own UI proves they are distinct: it renders ``pickupByDate``
+    only for ``READY_FOR_PICKUP``, and deliberately hides ``expiryDate`` in that
+    state. Reporting expiryDate as a pickup deadline would give a date that is
+    typically months away for something that must be collected within days.
+    """
+    raw_holds = dig(state, "entities.holds", url=url, default={})
+    if raw_holds is None:
+        raw_holds = {}
+    if not isinstance(raw_holds, dict):
+        raise ParseError(
+            f"expected entities.holds to be an object, got {type(raw_holds).__name__}",
+            url=url,
+            path="entities.holds",
+        )
+    bibs = dig(state, "entities.bibs", url=url, default={}) or {}
+
+    physical: list[ReadyItem] = []
+    digital: list[ReadyItem] = []
+
+    for hold_id, raw in raw_holds.items():
+        if not isinstance(raw, dict) or raw.get("status") != READY_STATUS:
+            continue
+        actions = list(raw.get("actions") or [])
+        is_digital = (raw.get("materialType") or "").upper() == "DIGITAL"
+        bib_id = raw.get("metadataId")
+        pickup = raw.get("pickupLocation") or {}
+
+        # eresourceUrl lives on the bib's availability, not on the hold, and is
+        # null for SPL's OverDrive titles -- so it is reported when present and
+        # never fabricated. record_url always works as somewhere to act.
+        availability = (bibs.get(bib_id or "") or {}).get("availability") or {}
+
+        item = ReadyItem(
+            type="digital" if is_digital else "physical",
+            hold_id=hold_id,
+            title=raw.get("bibTitle"),
+            bib_id=bib_id,
+            action_needed="borrow" if is_digital else "pick up",
+            pickup_branch=pickup.get("name"),
+            pickup_branch_code=pickup.get("code"),
+            pickup_by=raw.get("pickupByDate"),
+            # The frontend's own test for "this digital hold can be borrowed now".
+            can_checkout=is_digital and "checkout" in actions,
+            eresource_url=availability.get("eresourceUrl"),
+            expires=raw.get("expiryDate"),
+            record_url=config.record_url(bib_id) if bib_id else None,
+            actions=actions,
+        )
+        (digital if is_digital else physical).append(item)
+
+    physical.sort(key=lambda i: (i.pickup_by is None, i.pickup_by or ""))
+    digital.sort(key=lambda i: (i.expires is None, i.expires or ""))
+
+    return ReadyToBorrow(
+        total=len(physical) + len(digital), physical=physical, digital=digital
+    )
+
+
+async def list_ready_to_borrow(session: SplSession, config: Config) -> ReadyToBorrow:
+    """Holds ready to act on. Read-only; one authenticated request."""
+    state = await _fetch_holds_state(session, config)
+    return parse_ready_to_borrow(state, config, url=config.holds_url)
+
+
 async def _fetch_holds_state(session: SplSession, config: Config) -> dict[str, Any]:
     url = config.holds_url
     resp = await session.authenticated_get(url)
@@ -110,9 +188,16 @@ async def _fetch_holds_state(session: SplSession, config: Config) -> dict[str, A
 
 
 async def list_holds(session: SplSession, config: Config) -> HoldsList:
-    """All current holds. One authenticated request."""
+    """All current holds, plus a `ready` view of the ones awaiting action.
+
+    One authenticated request. `ready` is additive -- the existing `summary`,
+    `physical` and `digital` keys are unchanged, so callers written against the
+    old shape keep working.
+    """
     state = await _fetch_holds_state(session, config)
-    return parse_holds(state, url=config.holds_url)
+    result = parse_holds(state, url=config.holds_url)
+    result.ready = parse_ready_to_borrow(state, config, url=config.holds_url)
+    return result
 
 
 # --------------------------------------------------------- gateway calls

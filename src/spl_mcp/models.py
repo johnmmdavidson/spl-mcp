@@ -118,6 +118,109 @@ class HoldsList(BaseModel):
     summary: HoldsSummary
     physical: list[Hold] = Field(default_factory=list)
     digital: list[Hold] = Field(default_factory=list)
+    # Additive: a convenience view of the holds already present above, so the
+    # existing shape stays backward-compatible.
+    ready: ReadyToBorrow | None = Field(
+        None, description="Holds waiting on you right now; same items as above, filtered"
+    )
+
+
+# ------------------------------------------------------------- checkouts
+
+
+class Checkout(BaseModel):
+    """One borrowed item, physical or digital."""
+
+    checkout_id: str
+    title: str | None = None
+    author: str | None = None
+    bib_id: str | None = Field(None, description="Join key back into the catalog")
+    format: str | None = Field(None, description="Catalog format code, e.g. 'BK', 'EBOOK'")
+    format_label: str = "Unknown"
+    material_type: str | None = Field(None, description="'PHYSICAL' or 'DIGITAL'")
+    is_digital: bool = False
+    status: str | None = Field(None, description="'OUT', 'OVERDUE', ...")
+    due_date: str | None = None
+    times_renewed: int | None = None
+    fines: float | None = None
+    actions: list[str] = Field(
+        default_factory=list, description="What the library currently offers for this loan"
+    )
+    # Derived from `actions`, which is the library's own capability signal.
+    # There is no `renewable` boolean and no `renewals_remaining` count in the
+    # payload -- the frontend itself computes renewability this same way.
+    renewable: bool = False
+    returnable: bool = False
+    # physical
+    barcode: str | None = None
+    call_number: str | None = None
+    branch: str | None = None
+    copy_label: str | None = Field(None, description="Copy designation, from the payload's `copy`")
+    volume: str | None = None
+    # digital
+    digital_id: str | None = None
+    digital_format: str | None = Field(
+        None, description="Chosen ebook format (e.g. Kindle/EPUB); null until one is picked"
+    )
+    download_url: str | None = None
+    downloadable: bool = False
+    read_online_url: str | None = Field(None, description="thirdPartyReaderUrl, when present")
+
+
+class CheckoutsSummary(BaseModel):
+    total: int = 0
+    physical: int = 0
+    digital: int = 0
+    by_status: dict[str, int] = Field(default_factory=dict)
+    next_due: str | None = Field(None, description="Earliest due date across all loans")
+    overdue: int = 0
+
+
+class CheckoutsList(BaseModel):
+    summary: CheckoutsSummary
+    physical: list[Checkout] = Field(default_factory=list)
+    digital: list[Checkout] = Field(default_factory=list)
+
+
+# ------------------------------------------------------- ready to borrow
+
+
+class ReadyItem(BaseModel):
+    """A hold that is waiting on you right now."""
+
+    type: str = Field(..., description="'physical' or 'digital'")
+    hold_id: str
+    title: str | None = None
+    bib_id: str | None = None
+    action_needed: str = Field(..., description="What to do: 'pick up' or 'borrow'")
+    # physical
+    pickup_branch: str | None = None
+    pickup_branch_code: str | None = None
+    pickup_by: str | None = Field(
+        None,
+        description=(
+            "Deadline to collect it, from the hold's own pickupByDate field. "
+            "Distinct from expires."
+        ),
+    )
+    # digital
+    can_checkout: bool = Field(
+        False, description="True when the hold offers the 'checkout' action"
+    )
+    eresource_url: str | None = Field(
+        None, description="Direct borrow link if the catalog publishes one; often null"
+    )
+    expires: str | None = Field(
+        None, description="The hold's own expiryDate -- when the hold lapses, not a pickup deadline"
+    )
+    record_url: str | None = Field(None, description="Catalog page where the item can be acted on")
+    actions: list[str] = Field(default_factory=list)
+
+
+class ReadyToBorrow(BaseModel):
+    total: int = 0
+    physical: list[ReadyItem] = Field(default_factory=list)
+    digital: list[ReadyItem] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------- ebooks

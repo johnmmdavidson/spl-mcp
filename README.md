@@ -20,7 +20,9 @@ Raspberry Pi.
 | `search_titles(query, limit=10)` | no | Catalog search, results grouped across formats |
 | `get_title(bib_id)` | no | Full detail for one catalog record |
 | `check_ebook_formats(bib_id)` | no | Is the ebook available for Kindle? |
-| `list_holds()` | yes | All holds — physical and digital |
+| `list_holds()` | yes | All holds — physical and digital, plus a `ready` block |
+| `list_checkouts()` | yes | What's borrowed now, with due dates |
+| `list_ready_to_borrow()` | yes | Holds waiting on you right now |
 | `place_hold(bib_id, pickup_branch=None)` | yes | Mutating. `pickup_branch` is physical-only |
 | `cancel_hold(hold_id)` | yes | Mutating |
 | `suspend_hold(hold_id, until)` | yes | Mutating. `until` is required, but see below |
@@ -37,6 +39,37 @@ address is read from your library account rather than asked for.
 What any individual hold permits depends on its state, which `list_holds`
 reports per hold in `actions`. A hold that's ready for pickup can be cancelled
 but not suspended, and the server checks that before sending anything.
+
+### What's out and what's waiting
+
+`list_checkouts()` returns everything currently borrowed, soonest due first,
+with a summary carrying `next_due` and an `overdue` count.
+
+Two fields the library simply does not publish, and which this server therefore
+does not invent: **there is no checkout date** and **no remaining-renewals
+count**. What you get instead is `times_renewed`, plus a `renewable` flag
+derived from whether the library currently offers the `renew` action on that
+loan — which is exactly how the library's own interface decides whether to show
+you a Renew button.
+
+Digital loans only carry a read/download link *after* a format is chosen. Until
+then `download_url` and `read_online_url` are null and the loan offers
+`updateFormat`.
+
+`list_ready_to_borrow()` returns holds you can act on now — physical ones to
+collect, digital ones to borrow. It is read-only: it tells you what is ready,
+it does not borrow anything.
+
+> **`pickup_by` is not `expires`.** On a hold that is ready for collection, the
+> deadline is `pickup_by`, from the library's dedicated `pickupByDate` field.
+> The separate `expires` field means "when this hold lapses in the queue" and is
+> typically months away. Using `expires` as a pickup deadline would tell you
+> that you have until next year to collect a book the branch will reshelve in a
+> week. Both are returned, clearly named.
+
+A hold that is `IN_TRANSIT` — on its way to your branch — is deliberately *not*
+listed as ready, since it cannot be collected yet. It still appears in
+`list_holds()`.
 
 ### Suspending: digital holds do not resume on their own
 
@@ -104,6 +137,10 @@ page never displays (copy counts, hold queues, per-format holdability).
 - **Holds** are one authenticated `GET /v2/holds`; physical and digital arrive
   together, discriminated by `materialType`. Cancelled and expired holds need a
   separate request — see [docs/GATEWAY.md](docs/GATEWAY.md).
+- **Checkouts** are one authenticated `GET /v2/checkedout`. Note the path:
+  `/v2/checkouts` and `/v2/borrowing/checkedout` also answer 200 with a valid
+  app state, but their `entities.checkouts` is always empty — probing for a 200
+  picks a URL that silently reports zero loans forever.
 - **Mutations** go to the JSON holds gateway directly, never by driving the UI.
 - **Kindle availability** is resolved through OverDrive's public web API
   (`thunder.api.overdrive.com`) — the same unauthenticated endpoint

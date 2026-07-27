@@ -1,0 +1,157 @@
+{
+  "_comment": [
+    "SYNTHETIC checkouts state. Hand-written, not captured from a real account.",
+    "Real loans are personal data and must never be committed.",
+    "Field names and value shapes mirror what BiblioCommons returns at",
+    "GET /v2/checkedout. Note the digital loan's checkoutId is a NEGATIVE",
+    "NUMBER, not a UUID -- the UUID is a separate `digitalId` field, so the",
+    "id shape is not a reliable physical/digital discriminator. materialType",
+    "is. There is no checkoutDate and no renewalsRemaining in this payload;",
+    "renewability is decided by the presence of `renew` in `actions`."
+  ],
+  "entities": {
+    "checkouts": {
+      "90000001": {
+        "checkoutId": "90000001",
+        "materialType": "PHYSICAL",
+        "status": "OUT",
+        "bibTitle": "An Example Borrowed Book",
+        "metadataId": "S30C1000001",
+        "dueDate": "2026-08-20",
+        "timesRenewed": 1,
+        "fines": 0,
+        "barcode": "0010000000001",
+        "callNumber": "FIC EXAMPLE",
+        "branch": "Montlake Branch",
+        "copy": "1",
+        "volume": null,
+        "digitalId": null,
+        "downloadUrl": null,
+        "downloadable": false,
+        "thirdPartyReaderUrl": null,
+        "format": null,
+        "checkInEnabled": false,
+        "actions": ["renew"]
+      },
+      "90000002": {
+        "checkoutId": "90000002",
+        "materialType": "PHYSICAL",
+        "status": "OVERDUE",
+        "bibTitle": "A Late Book",
+        "metadataId": "S30C1000003",
+        "dueDate": "2026-07-01",
+        "timesRenewed": 3,
+        "fines": 2.5,
+        "barcode": "0010000000002",
+        "callNumber": "FIC LATE",
+        "branch": "Capitol Hill Branch",
+        "copy": null,
+        "volume": null,
+        "digitalId": null,
+        "downloadUrl": null,
+        "downloadable": false,
+        "thirdPartyReaderUrl": null,
+        "format": null,
+        "checkInEnabled": false,
+        "actions": []
+      },
+      "-55000001": {
+        "checkoutId": "-55000001",
+        "materialType": "DIGITAL",
+        "status": "OUT",
+        "bibTitle": "An Example Borrowed Ebook",
+        "metadataId": "S30C2000001",
+        "dueDate": "2026-08-05",
+        "timesRenewed": 0,
+        "fines": 0,
+        "barcode": "mq0000001",
+        "callNumber": "EBOOK OVERDRIVE",
+        "branch": null,
+        "copy": null,
+        "volume": null,
+        "digitalId": "9D52F3B0-0000-4000-8000-00000000000A",
+        "downloadUrl": null,
+        "downloadable": false,
+        "thirdPartyReaderUrl": null,
+        "format": null,
+        "checkInEnabled": true,
+        "actions": ["checkIn", "updateFormat"]
+      },
+      "-55000002": {
+        "checkoutId": "-55000002",
+        "materialType": "DIGITAL",
+        "status": "OUT",
+        "bibTitle": "An Ebook With A Format Chosen",
+        "metadataId": "S30C2000002",
+        "dueDate": "2026-08-09",
+        "timesRenewed": 0,
+        "fines": 0,
+        "barcode": "mq0000002",
+        "callNumber": "EBOOK OVERDRIVE",
+        "branch": null,
+        "copy": null,
+        "volume": null,
+        "digitalId": "9D52F3B0-0000-4000-8000-00000000000B",
+        "downloadUrl": "https://example.invalid/download/epub",
+        "downloadable": true,
+        "thirdPartyReaderUrl": "https://example.invalid/read/online",
+        "format": "EPUB",
+        "checkInEnabled": true,
+        "actions": ["checkIn", "renew"]
+      }
+    },
+    "bibs": {
+      "S30C1000001": {
+        "id": "S30C1000001",
+        "briefInfo": {
+          "title": "An Example Borrowed Book",
+          "authors": ["Example, Ann"],
+          "format": "BK"
+        },
+        "policy": { "materialType": "PHYSICAL", "provider": "ILS" }
+      },
+      "S30C1000003": {
+        "id": "S30C1000003",
+        "briefInfo": {
+          "title": "A Late Book",
+          "authors": ["Tardy, Tom"],
+          "format": "LPRINT"
+        },
+        "policy": { "materialType": "PHYSICAL", "provider": "ILS" }
+      },
+      "S30C2000001": {
+        "id": "S30C2000001",
+        "briefInfo": {
+          "title": "An Example Borrowed Ebook",
+          "authors": ["Digital, Dana"],
+          "format": "EBOOK"
+        },
+        "policy": { "materialType": "DIGITAL", "provider": "OverDriveAPI" }
+      },
+      "S30C2000002": {
+        "id": "S30C2000002",
+        "briefInfo": {
+          "title": "An Ebook With A Format Chosen",
+          "authors": ["Epub, Eli"],
+          "format": "EBOOK"
+        },
+        "policy": { "materialType": "DIGITAL", "provider": "OverDriveAPI" }
+      }
+    }
+  },
+  "borrowing": {
+    "checkedout": {
+      "items": ["90000001", "90000002", "-55000001", "-55000002"],
+      "pagination": { "count": 4, "page": 1, "limit": 25, "pages": 1 },
+      "summary": {
+        "nextDue": { "date": "2026-07-01", "status": "OVERDUE" },
+        "total": 4,
+        "status": {
+          "OUT": { "PHYSICAL": 1, "DIGITAL": 2 },
+          "OVERDUE": { "PHYSICAL": 1 }
+        },
+        "quotas": [{ "type": "OverDriveAPI", "remaining": 23, "total": 25 }]
+      }
+    }
+  }
+}

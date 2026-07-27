@@ -14,7 +14,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 from pydantic import Field
 
-from . import catalog, ebooks, holds
+from . import catalog, checkouts, ebooks, holds
 from .config import Config, load_config
 from .errors import SplMcpError
 from .models import format_label
@@ -35,6 +35,11 @@ Search results are grouped by work: each result carries a `formats` list with
 one entry per edition (physical book, large print, audio CD, ebook,
 eaudiobook). Use the `bib_id` of the specific format you want -- `place_hold`
 takes a format's bib_id, not the work's.
+
+`list_checkouts` shows what is currently borrowed and when it is due.
+`list_ready_to_borrow` shows holds awaiting action: physical ones give the
+branch and the pick-up-by deadline, digital ones report whether they can be
+borrowed now. Both are read-only.
 
 Holds can be placed, cancelled, suspended, and reactivated -- physical and
 digital (ebook / eaudiobook) alike, with no difference in how you call them.
@@ -179,6 +184,39 @@ async def check_ebook_formats(
 async def list_holds() -> dict[str, Any]:
     try:
         result = await holds.list_holds(get_session(), get_config())
+        return result.model_dump(mode="json")
+    except Exception as exc:
+        raise _fail(exc) from exc
+
+
+@mcp.tool(
+    description=(
+        "List everything currently checked out (borrowed), physical and digital, "
+        "with due dates. Each loan reports whether it can be renewed or returned "
+        "based on what the library currently offers for it. Requires credentials."
+    ),
+    annotations={"readOnlyHint": True, "openWorldHint": True},
+)
+async def list_checkouts() -> dict[str, Any]:
+    try:
+        result = await checkouts.list_checkouts(get_session(), get_config())
+        return result.model_dump(mode="json")
+    except Exception as exc:
+        raise _fail(exc) from exc
+
+
+@mcp.tool(
+    description=(
+        "List holds that are waiting on you right now. Physical items give the "
+        "branch and the pick-up-by deadline; digital items report whether they "
+        "can be borrowed. Read-only -- it reports what is ready, it does not "
+        "borrow anything."
+    ),
+    annotations={"readOnlyHint": True, "openWorldHint": True},
+)
+async def list_ready_to_borrow() -> dict[str, Any]:
+    try:
+        result = await holds.list_ready_to_borrow(get_session(), get_config())
         return result.model_dump(mode="json")
     except Exception as exc:
         raise _fail(exc) from exc
