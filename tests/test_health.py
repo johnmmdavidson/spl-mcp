@@ -175,3 +175,55 @@ async def test_a_login_post_that_timed_out_is_not_called_a_possible_write(tmp_pa
         await session.aclose()
     assert "no answer within 30s" in str(err.value)
     assert "taken effect" not in str(err.value)
+
+
+# ------------------------------------------- local Codex round 1, 2026-11-10
+
+
+class _BodyTimesOut(httpx.AsyncByteStream):
+    async def __aiter__(self):
+        raise httpx.ReadTimeout("body stalled")
+        yield b""  # pragma: no cover
+
+
+async def test_a_body_read_timeout_is_plain_too(tmp_path):
+    transport = httpx.MockTransport(lambda r: httpx.Response(200, stream=_BodyTimesOut()))
+    session = SplSession(cfg(tmp_path), transport=transport)
+    try:
+        with pytest.raises(UnreachableError, match="could not be reached"):
+            await session.get(f"{BASE}/v2/search")
+    finally:
+        await session.aclose()
+
+
+async def test_environment_proxies_are_still_honoured(tmp_path, monkeypatch):
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.invalid:3128")
+    session = SplSession(cfg(tmp_path))
+    try:
+        client = await session.client()
+        # httpx routes a proxied URL through a mounted proxy transport.
+        chosen = client._transport_for_url(httpx.URL(f"{BASE}/v2/search"))
+        assert chosen is not client._transport
+    finally:
+        await session.aclose()
+
+
+async def test_setup_check_fails_when_credentials_are_unreadable(monkeypatch, capsys):
+    from spl_mcp import catalog, check
+    from spl_mcp.models import SearchResults, WorkGroup
+
+    async def fake_search(*a, **k):
+        return SearchResults(
+            query="q", total_matches=1, page=1, returned=1,
+            results=[WorkGroup(title="T", representative_bib_id="S246C1", formats=[])],
+        )
+
+    async def fake_fetch(*a, **k):
+        return {"briefInfo": {"title": "T"}}
+
+    bad = Config(use_overdrive_thunder=False, credentials_error="secrets.toml is missing pin")
+    monkeypatch.setattr(check, "load_config", lambda: bad)
+    monkeypatch.setattr(catalog, "search_titles", fake_search)
+    monkeypatch.setattr(catalog, "fetch_record", fake_fetch)
+    assert await check.run() == 1
+    assert "[ FAIL ] login + holds" in capsys.readouterr().out

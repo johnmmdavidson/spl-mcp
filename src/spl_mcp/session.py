@@ -41,28 +41,28 @@ CHANGES_NOTHING = "spl_mcp.changes_nothing"
 _NOT_SENT = (httpx.ConnectError, httpx.ConnectTimeout, httpx.UnsupportedProtocol)
 
 
-class PlainErrorTransport(httpx.AsyncBaseTransport):
-    """Wraps the real transport so every network failure reads as one plain line.
+class PlainErrorClient(httpx.AsyncClient):
+    """An httpx client whose every network failure reads as one plain line.
 
-    Every request this server makes goes through it -- the library, the holds
-    gateway, OverDrive -- so the wording lives in one place. A request that may
-    change something (anything but GET) and failed after it was sent is
-    reported as possibly applied: it must not be retried blindly.
+    Every request this server makes goes through ``send`` -- the library, the
+    holds gateway, OverDrive -- including redirects and the response body, so
+    the wording lives in one place. It overrides ``send`` rather than wrapping
+    the transport, which would switch off httpx's environment proxy routing.
+    A request that may change something (anything but GET) and failed after
+    it was sent is reported as possibly applied: it must not be retried blindly.
     """
 
-    def __init__(self, inner: httpx.AsyncBaseTransport, timeout: float | None = None):
-        self._inner = inner
-        self._timeout = timeout
-
-    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+    async def send(self, request: httpx.Request, **kwargs: Any) -> httpx.Response:
         try:
-            return await self._inner.handle_async_request(request)
+            return await super().send(request, **kwargs)
         except httpx.TransportError as exc:
             raise UnreachableError(self._describe(request, exc)) from exc
 
     def _describe(self, request: httpx.Request, exc: httpx.TransportError) -> str:
         if isinstance(exc, httpx.TimeoutException) and not isinstance(exc, httpx.ConnectTimeout):
-            why = f"no answer within {self._timeout:g}s" if self._timeout else "timed out"
+            why = "timed out"
+            if isinstance(self.timeout.read, int | float):
+                why = f"no answer within {self.timeout.read:g}s"
         else:
             why = type(exc).__name__
         msg = f"the library could not be reached at {request.url.host} ({why})"
@@ -73,9 +73,6 @@ class PlainErrorTransport(httpx.AsyncBaseTransport):
                 "so check list_holds before trying again"
             )
         return msg
-
-    async def aclose(self) -> None:
-        await self._inner.aclose()
 
 
 class SplSession:
@@ -96,7 +93,7 @@ class SplSession:
     # ------------------------------------------------------------ client
 
     def _new_client(self) -> httpx.AsyncClient:
-        client = httpx.AsyncClient(
+        client = PlainErrorClient(
             headers={
                 "User-Agent": self.config.user_agent,
                 "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
@@ -104,9 +101,7 @@ class SplSession:
             },
             timeout=self.config.timeout_seconds,
             follow_redirects=True,
-            transport=PlainErrorTransport(
-                self._transport or httpx.AsyncHTTPTransport(), self.config.timeout_seconds
-            ),
+            transport=self._transport,
         )
         self._load_cookies(client)
         return client

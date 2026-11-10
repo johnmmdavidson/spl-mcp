@@ -90,10 +90,13 @@ async def run() -> int:
 
         # 4. Authenticated holds read.
         if not config.credentials:
-            line(SKIP, "login + holds: no credentials configured")
-            print()
             if config.credentials_error:
-                print(f"Credentials could not be read: {config.credentials_error}")
+                # Credentials exist but cannot be read: a failure, not a skip.
+                line(FAIL, f"login + holds: {config.credentials_error}")
+                failures += 1
+            else:
+                line(SKIP, "login + holds: no credentials configured")
+            print()
             print("To enable the authenticated tools, add the card number and PIN to the")
             print(f"macOS Keychain (service {keychain_service()!r}, accounts 'card_number' and")
             print("'pin'), set SPL_MCP_CARD_NUMBER and SPL_MCP_PIN, or fill in")
