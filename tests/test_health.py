@@ -159,3 +159,19 @@ async def test_health_says_saved_session_when_no_login_happened(tmp_path):
     report = await _health(tmp_path, rec.transport())
     assert by_name(report)["login"]["detail"].startswith("saved session still valid")
     assert rec.posts == []
+
+
+async def test_a_login_post_that_timed_out_is_not_called_a_possible_write(tmp_path):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "GET":
+            return Recorder().handler(request)
+        raise httpx.ReadTimeout("boom", request=request)
+
+    session = SplSession(cfg(tmp_path), transport=httpx.MockTransport(handler))
+    try:
+        with pytest.raises(UnreachableError) as err:
+            await session.authenticated_get(f"{BASE}/v2/holds")
+    finally:
+        await session.aclose()
+    assert "no answer within 30s" in str(err.value)
+    assert "taken effect" not in str(err.value)

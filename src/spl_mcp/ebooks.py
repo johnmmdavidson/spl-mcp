@@ -23,10 +23,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import httpx
-
 from .catalog import missing_bib_error
 from .config import Config
+from .errors import UnreachableError
 from .models import EbookFormat, EbookFormatReport
 from .session import SplSession
 from .state import dig, extract_state
@@ -83,10 +82,10 @@ async def _thunder_get(
     client = await session.client()
     try:
         resp = await client.get(url, params=params, headers={"Accept": "application/json"})
-    except httpx.TransportError as exc:
+    except UnreachableError as exc:
         # Best-effort lookup: unreachable reads as "could not determine" (null),
         # never as "not offered".
-        log.warning("thunder %s unreachable: %s", path, type(exc).__name__)
+        log.warning("thunder %s unreachable: %s", path, exc)
         return None
     if resp.status_code == 404:
         return None
