@@ -23,8 +23,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+import httpx
+
+from .catalog import missing_bib_error
 from .config import Config
-from .errors import ParseError
 from .models import EbookFormat, EbookFormatReport
 from .session import SplSession
 from .state import dig, extract_state
@@ -79,7 +81,13 @@ async def _thunder_get(
 ) -> Any:
     url = f"{THUNDER_BASE}/{config.overdrive_library}{path}"
     client = await session.client()
-    resp = await client.get(url, params=params, headers={"Accept": "application/json"})
+    try:
+        resp = await client.get(url, params=params, headers={"Accept": "application/json"})
+    except httpx.TransportError as exc:
+        # Best-effort lookup: unreachable reads as "could not determine" (null),
+        # never as "not offered".
+        log.warning("thunder %s unreachable: %s", path, type(exc).__name__)
+        return None
     if resp.status_code == 404:
         return None
     if resp.status_code >= 400:
@@ -105,12 +113,7 @@ def _select_ebook_bib(
     bibs = dig(state, "entities.bibs", url=url)
     target = bibs.get(bib_id)
     if target is None:
-        raise ParseError(
-            f"record page for {bib_id!r} did not contain that bib in entities.bibs. "
-            "The id may be wrong or the record withdrawn.",
-            url=url,
-            path=f"entities.bibs.{bib_id}",
-        )
+        raise missing_bib_error(state, bibs, bib_id, url=url)
 
     target_brief = target.get("briefInfo") or {}
     if target_brief.get("format") == "EBOOK":

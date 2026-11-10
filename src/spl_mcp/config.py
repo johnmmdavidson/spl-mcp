@@ -8,6 +8,9 @@ that is never part of the repo, or from the environment.
 from __future__ import annotations
 
 import os
+import shutil
+import subprocess
+import sys
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -22,6 +25,13 @@ SECRETS_SEARCH_PATHS = (
     Path("secrets.toml"),
     Path("~/.config/spl-mcp/secrets.toml"),
 )
+
+# macOS Keychain: generic-password items under this service, one per account.
+KEYCHAIN_SERVICE_DEFAULT = "cornice-spl"
+KEYCHAIN_ACCOUNTS = ("card_number", "pin")
+# `security` exits 44 (errSecItemNotFound) when the item does not exist. Any
+# other non-zero exit is an unreadable Keychain, not an absent item.
+_SECURITY_NOT_FOUND = 44
 
 _TRUE = {"1", "true", "yes", "on"}
 _FALSE = {"0", "false", "no", "off"}
@@ -87,6 +97,9 @@ class Config:
     )
     # credentials, resolved lazily so unauthenticated tools work without them
     credentials: Credentials | None = None
+    # why credentials could not be read, when they exist but are unreadable.
+    # Kept rather than raised so search and the health check still work.
+    credentials_error: str | None = None
 
     # -- derived URLs -------------------------------------------------
 
@@ -118,19 +131,87 @@ class Config:
 
     def require_credentials(self) -> Credentials:
         if self.credentials is None:
+            if self.credentials_error:
+                raise ConfigError(self.credentials_error)
             raise ConfigError(
-                "no library credentials configured. Set SPL_MCP_CARD_NUMBER and SPL_MCP_PIN, "
+                "no library credentials configured. Add them to the macOS Keychain "
+                f"(service {keychain_service()!r}, accounts 'card_number' and 'pin'), "
+                "set SPL_MCP_CARD_NUMBER and SPL_MCP_PIN, "
                 "or copy secrets.example.toml to ~/.config/spl-mcp/secrets.toml and fill it in."
             )
         return self.credentials
 
 
+def keychain_service() -> str:
+    """The Keychain service to read; SPL_MCP_KEYCHAIN_SERVICE='' turns it off."""
+    return os.environ.get("SPL_MCP_KEYCHAIN_SERVICE", KEYCHAIN_SERVICE_DEFAULT).strip()
+
+
+def _run_security(service: str, account: str) -> subprocess.CompletedProcess[str]:
+    """The one place that shells out to the Keychain. Tests replace it."""
+    return subprocess.run(
+        ["security", "find-generic-password", "-s", service, "-a", account, "-w"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+
+
+def _keychain_read(service: str, account: str) -> str | None:
+    """One Keychain item's value, or None when the item does not exist.
+
+    Raises ConfigError when the item may exist but could not be read (access
+    denied, Keychain locked): "unreadable" must not be reported as "absent".
+    The value itself never appears in an error message.
+    """
+    try:
+        out = _run_security(service, account)
+    except FileNotFoundError:
+        return None  # no `security` binary: not a Mac
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise ConfigError(
+            f"could not read Keychain item {service}/{account}: {type(exc).__name__}"
+        ) from None
+    if out.returncode == _SECURITY_NOT_FOUND:
+        return None
+    if out.returncode != 0:
+        raise ConfigError(
+            f"could not read Keychain item {service}/{account} "
+            f"(security exited {out.returncode}); the Keychain may be locked or access denied"
+        )
+    value = out.stdout.rstrip("\n").strip()
+    return value or None
+
+
+def load_keychain_credentials() -> Credentials | None:
+    """Card number and PIN from the macOS Keychain, or None if not stored there."""
+    service = keychain_service()
+    if not service or sys.platform != "darwin" or shutil.which("security") is None:
+        return None
+    card, pin = (_keychain_read(service, account) for account in KEYCHAIN_ACCOUNTS)
+    if card and pin:
+        return Credentials(card_number=card, pin=pin)
+    if card or pin:
+        missing = "pin" if card else "card_number"
+        raise ConfigError(
+            f"the Keychain has only half the library login: service {service!r} "
+            f"has no {missing!r} item"
+        )
+    return None
+
+
 def load_credentials(path: Path | None = None) -> Credentials | None:
-    """Env vars win; otherwise read the first secrets file we find."""
+    """Env vars win; then the macOS Keychain; then the first secrets file we find."""
     card = os.environ.get("SPL_MCP_CARD_NUMBER")
     pin = os.environ.get("SPL_MCP_PIN")
     if card and pin:
         return Credentials(card_number=card.strip(), pin=pin.strip())
+
+    if not (card or pin):
+        from_keychain = load_keychain_credentials()
+        if from_keychain is not None:
+            return from_keychain
 
     secrets_path = path or _first_existing(SECRETS_SEARCH_PATHS)
     if secrets_path is None:
@@ -200,5 +281,9 @@ def load_config(path: Path | None = None) -> Config:
     if "SPL_MCP_COOKIE_STORE" in env:
         cfg.cookie_store = Path(env["SPL_MCP_COOKIE_STORE"]).expanduser()
 
-    cfg.credentials = load_credentials()
+    try:
+        cfg.credentials = load_credentials()
+    except ConfigError as exc:
+        cfg.credentials = None
+        cfg.credentials_error = str(exc)
     return cfg

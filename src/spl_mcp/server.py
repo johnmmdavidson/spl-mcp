@@ -14,7 +14,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 from pydantic import Field
 
-from . import catalog, checkouts, ebooks, holds
+from . import catalog, checkouts, ebooks, health, holds
 from .config import Config, load_config
 from .errors import SplMcpError
 from .models import format_label
@@ -48,6 +48,14 @@ Digital holds have no pickup branch; you are emailed when the loan is ready.
 What a given hold permits depends on its current state, and `list_holds`
 reports that per hold in its `actions` list. A hold that is ready for pickup,
 for instance, can be cancelled but not suspended.
+
+Before placing a hold, `get_title` reports the wait in `queue`: the library's
+own count of holds and copies for that edition. The library does not publish
+where a new hold would land; that position appears in `list_holds` once a hold
+is placed.
+
+`health_check` says plainly whether the server is up, the library reachable,
+and the library login working.
 
 Mutating tools are disabled entirely unless the server is configured with
 read_only = false, in which case they will say so plainly.
@@ -114,12 +122,13 @@ async def search_titles(
 @mcp.tool(
     description=(
         "Get full detail for one catalog record by its bib id, including "
-        "availability, copy counts, and hold policy."
+        "availability, copy counts, hold policy, and the hold queue: how many "
+        "holds and copies the library reports for this edition."
     ),
     annotations={"readOnlyHint": True, "openWorldHint": True},
 )
 async def get_title(
-    bib_id: Annotated[str, Field(description="Catalog record id, e.g. 'S30C3420266'")],
+    bib_id: Annotated[str, Field(description="Catalog record id, e.g. 'S246C406547'")],
 ) -> dict[str, Any]:
     try:
         bib = await catalog.fetch_record(get_session(), get_config(), bib_id)
@@ -148,6 +157,7 @@ async def get_title(
             "total_copies": avail.get("totalCopies"),
             "available_copies": avail.get("availableCopies"),
             "hold_queue": avail.get("heldCopies"),
+            "queue": catalog.queue_summary(avail),
         }
     except Exception as exc:
         raise _fail(exc) from exc
@@ -218,6 +228,20 @@ async def list_ready_to_borrow() -> dict[str, Any]:
     try:
         result = await holds.list_ready_to_borrow(get_session(), get_config())
         return result.model_dump(mode="json")
+    except Exception as exc:
+        raise _fail(exc) from exc
+
+
+@mcp.tool(
+    description=(
+        "Health check: says plainly whether this server is up, whether the "
+        "library is reachable, and whether the library login works. Read-only."
+    ),
+    annotations={"readOnlyHint": True, "openWorldHint": True},
+)
+async def health_check() -> dict[str, Any]:
+    try:
+        return await health.run_health(get_config(), get_session())
     except Exception as exc:
         raise _fail(exc) from exc
 
@@ -310,7 +334,11 @@ async def reactivate_hold(
 
 
 def main() -> None:
-    cfg = get_config()
+    try:
+        cfg = get_config()
+    except SplMcpError as exc:
+        print(f"spl-mcp could not start: {exc}", file=sys.stderr)
+        sys.exit(1)
     log.info(
         "spl-mcp starting (library=%s, read_only=%s, credentials=%s)",
         cfg.slug,

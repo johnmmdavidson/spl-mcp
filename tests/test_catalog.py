@@ -133,3 +133,54 @@ def test_partial_bib_does_not_fail_the_whole_search():
     assert results.results[0].title == "Sparse"
     fmt = results.results[0].formats[0]
     assert fmt.status is None and fmt.holdable is False
+
+
+# --------------------------------------------------- renumbered record ids
+
+from spl_mcp.catalog import missing_bib_error, queue_summary  # noqa: E402
+from spl_mcp.errors import StaleIdError  # noqa: E402
+
+
+def _renumbered_page():
+    bibs = {
+        "S246C1": {"briefInfo": {"title": "Dune", "format": "BK"}},
+        "S246C2": {"briefInfo": {"title": "Dune", "format": "EBOOK"}},
+    }
+    state = {
+        "entities": {"bibs": bibs},
+        "catalogBibs": {
+            "catalogBib": {"id": "S246C1"},
+            "manifestations": {"ids": ["S246C1", "S246C2"]},
+        },
+    }
+    return state, bibs
+
+
+def test_old_id_is_named_stale_with_the_current_ids():
+    state, bibs = _renumbered_page()
+    err = missing_bib_error(state, bibs, "S30C3420266", url="http://test")
+    assert isinstance(err, StaleIdError)
+    assert "S30C3420266" in str(err) and "S246C1" in str(err) and "S246C2" in str(err)
+
+
+def test_unknown_id_without_a_current_record_stays_a_parse_error():
+    state, bibs = _renumbered_page()
+    del state["catalogBibs"]
+    err = missing_bib_error(state, bibs, "S30C3420266", url="http://test")
+    assert isinstance(err, ParseError)
+
+
+def test_queue_summary_uses_the_librarys_counts():
+    q = queue_summary({"heldCopies": 47, "totalCopies": 9, "availableCopies": 0})
+    assert q["summary"] == "47 holds on 9 copies"
+    assert q["position_if_placed"] is None
+
+
+def test_queue_summary_names_copies_available_now():
+    q = queue_summary({"heldCopies": 0, "totalCopies": 1, "availableCopies": 1})
+    assert q["summary"] == "0 holds on 1 copy; 1 available now"
+
+
+def test_queue_summary_unknown_is_none_not_zero():
+    q = queue_summary({})
+    assert q["holds"] is None and q["copies"] is None and q["summary"] is None

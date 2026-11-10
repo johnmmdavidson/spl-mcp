@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from .config import Config
-from .errors import ParseError
+from .errors import ParseError, SplMcpError, StaleIdError
 from .models import FormatOption, SearchResults, WorkGroup, format_label
 from .session import SplSession
 from .state import dig, extract_state
@@ -166,11 +166,73 @@ async def fetch_record(session: SplSession, config: Config, bib_id: str) -> dict
 
     bib = bibs.get(bib_id)
     if bib is None:
-        raise ParseError(
-            f"record page for {bib_id!r} did not contain that bib in entities.bibs "
-            f"(it held: {', '.join(sorted(bibs)[:8]) or 'nothing'}). "
-            "The id may be wrong or the record withdrawn.",
-            url=url,
-            path=f"entities.bibs.{bib_id}",
-        )
+        raise missing_bib_error(state, bibs, bib_id, url=url)
     return bib
+
+
+def missing_bib_error(
+    state: dict[str, Any], bibs: dict[str, Any], bib_id: str, *, url: str
+) -> SplMcpError:
+    """The error for a record page that does not carry the bib asked for.
+
+    When the page names a different current record for the work
+    (``catalogBibs.catalogBib.id``), the id is one the library no longer uses:
+    say so and give the current ids. The old id is not mapped to a new one
+    here -- the page names the work, not which edition the old id was, and a
+    hold on the wrong edition is worse than a plain error.
+    """
+    current = dig(state, "catalogBibs.catalogBib.id", url=url, default=None)
+    if current and current != bib_id and current in bibs:
+        editions = dig(state, "catalogBibs.manifestations.ids", url=url, default=None) or [current]
+        listed = ", ".join(
+            f"{eid} ({format_label((bibs.get(eid, {}).get('briefInfo') or {}).get('format'))})"
+            for eid in editions
+            if eid in bibs
+        )
+        title = (bibs[current].get("briefInfo") or {}).get("title")
+        return StaleIdError(
+            f"{bib_id!r} is not a current record id at the library: its page now serves "
+            f"{title!r} under different ids ({listed}). Search again and use a current id."
+        )
+    return ParseError(
+        f"record page for {bib_id!r} did not contain that bib in entities.bibs "
+        f"(it held: {', '.join(sorted(bibs)[:8]) or 'nothing'}). "
+        "The id may be wrong or the record withdrawn.",
+        url=url,
+        path=f"entities.bibs.{bib_id}",
+    )
+
+
+def queue_summary(availability: dict[str, Any] | None) -> dict[str, Any]:
+    """What the library publishes about the wait for a title, before placing a hold.
+
+    BiblioCommons publishes the number of holds and copies per edition
+    (``heldCopies``, ``totalCopies``), the same "N holds on M copies" its own
+    page shows. It does not publish where a new hold would land: the position
+    exists only once a hold is placed (``holdsPosition``, shown by list_holds).
+    A field the library did not send stays None -- never 0.
+    """
+    avail = availability or {}
+    holds = avail.get("heldCopies")
+    copies = avail.get("totalCopies")
+    available = avail.get("availableCopies")
+    summary = None
+    if holds is not None and copies is not None:
+        summary = f"{holds} hold{'s' if holds != 1 else ''} on {copies} cop" + (
+            "y" if copies == 1 else "ies"
+        )
+        if available:
+            summary += f"; {available} available now"
+    return {
+        "holds": holds,
+        "copies": copies,
+        "available_copies": available,
+        "on_order_copies": avail.get("onOrderCopies"),
+        "summary": summary,
+        "position_if_placed": None,
+        "position_note": (
+            "The library does not publish where a new hold would land. A new hold "
+            "joins behind the existing holds; its exact position appears in "
+            "list_holds once it is placed."
+        ),
+    }

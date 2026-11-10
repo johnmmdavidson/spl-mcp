@@ -38,7 +38,10 @@ async def run() -> int:
     print("-" * 60)
 
     try:
-        # 1. Unauthenticated search -- validates the whole parse pipeline.
+        # 1. Unauthenticated search -- validates the whole parse pipeline. The
+        #    ids for steps 2 and 3 come from this search, never hardcoded: the
+        #    library renumbered its records once (S30C... to S246C...).
+        sample_id: str | None = None
         try:
             results = await catalog.search_titles(session, config, "dune frank herbert", limit=3)
             if not results.results:
@@ -46,6 +49,7 @@ async def run() -> int:
                 failures += 1
             else:
                 top = results.results[0]
+                sample_id = top.representative_bib_id
                 line(
                     OK,
                     f"search: {results.total_matches} matches; "
@@ -56,17 +60,23 @@ async def run() -> int:
             failures += 1
 
         # 2. Record fetch.
-        try:
-            bib = await catalog.fetch_record(session, config, "S30C3420266")
-            line(OK, f"record fetch: {(bib.get('briefInfo') or {}).get('title')!r}")
-        except Exception as exc:
-            line(FAIL, f"record fetch: {type(exc).__name__}: {exc}")
-            failures += 1
-
-        # 3. Ebook/Kindle resolution.
-        if config.use_overdrive_thunder:
+        if sample_id is None:
+            line(SKIP, "record fetch: no id, the search step failed")
+            line(SKIP, "ebook formats: no id, the search step failed")
+        else:
             try:
-                report = await ebooks.check_ebook_formats(session, config, "S30C2949104")
+                bib = await catalog.fetch_record(session, config, sample_id)
+                line(OK, f"record fetch: {(bib.get('briefInfo') or {}).get('title')!r}")
+            except Exception as exc:
+                line(FAIL, f"record fetch: {type(exc).__name__}: {exc}")
+                failures += 1
+
+        # 3. Ebook/Kindle resolution (resolves the work's ebook edition itself).
+        if sample_id is None:
+            pass
+        elif config.use_overdrive_thunder:
+            try:
+                report = await ebooks.check_ebook_formats(session, config, sample_id)
                 line(
                     OK,
                     f"ebook formats: kindle={report.kindle_available} "
