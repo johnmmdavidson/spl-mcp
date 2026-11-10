@@ -10,7 +10,7 @@ import asyncio
 import sys
 
 from . import catalog, ebooks, holds
-from .config import load_config
+from .config import keychain_service, load_config
 from .errors import SplMcpError
 from .session import SplSession
 
@@ -92,8 +92,12 @@ async def run() -> int:
         if not config.credentials:
             line(SKIP, "login + holds: no credentials configured")
             print()
-            print("To enable the authenticated tools, set SPL_MCP_CARD_NUMBER and")
-            print("SPL_MCP_PIN, or fill in ~/.config/spl-mcp/secrets.toml.")
+            if config.credentials_error:
+                print(f"Credentials could not be read: {config.credentials_error}")
+            print("To enable the authenticated tools, add the card number and PIN to the")
+            print(f"macOS Keychain (service {keychain_service()!r}, accounts 'card_number' and")
+            print("'pin'), set SPL_MCP_CARD_NUMBER and SPL_MCP_PIN, or fill in")
+            print("~/.config/spl-mcp/secrets.toml.")
         else:
             try:
                 current = await holds.list_holds(session, config)

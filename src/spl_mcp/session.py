@@ -76,11 +76,9 @@ class SplSession:
         self._client: httpx.AsyncClient | None = None
         self._lock = asyncio.Lock()
         self._logged_in_hint = False
-
-    @property
-    def has_session(self) -> bool:
-        """True when cookies from an earlier login are in hand (not yet re-verified)."""
-        return self._logged_in_hint
+        # Successful credential logins this session has made. Observed, so the
+        # health check can say whether a login just happened.
+        self.login_count = 0
 
     # ------------------------------------------------------------ client
 
@@ -286,6 +284,7 @@ class SplSession:
             )
 
         self._logged_in_hint = True
+        self.login_count += 1
         self._save_cookies(client)
         log.info("logged in to %s", self.config.base_url)
 

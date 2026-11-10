@@ -52,7 +52,8 @@ for instance, can be cancelled but not suspended.
 Before placing a hold, `get_title` reports the wait in `queue`: the library's
 own count of holds and copies for that edition. The library does not publish
 where a new hold would land; that position appears in `list_holds` once a hold
-is placed.
+is placed. For an ebook, `check_ebook_formats` also reports OverDrive's
+estimated wait in days.
 
 `health_check` says plainly whether the server is up, the library reachable,
 and the library login working.

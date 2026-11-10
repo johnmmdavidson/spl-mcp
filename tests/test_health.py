@@ -139,3 +139,23 @@ async def test_health_without_credentials_is_not_green(tmp_path):
     assert report["status"] == "degraded"
     assert by_name(report)["login"]["ok"] is None
     assert "[ skip ] login" in format_report(report)
+
+
+async def test_health_says_logged_in_when_a_stale_cookie_forced_a_fresh_login(tmp_path):
+    # Anonymous cookies from public pages must not read as "saved session valid".
+    (tmp_path / "cookies.json").write_text(
+        '{"cookies": [{"name": "anon", "value": "x", "domain": "seattle.bibliocommons.com"}]}'
+    )
+    report = await _health(tmp_path, Recorder().transport())
+    assert "logged in with the card and PIN" in by_name(report)["login"]["detail"]
+
+
+async def test_health_says_saved_session_when_no_login_happened(tmp_path):
+    rec = Recorder()
+    rec.authed = True  # the saved cookie is still good
+    (tmp_path / "cookies.json").write_text(
+        '{"cookies": [{"name": "bc_session", "value": "x", "domain": "seattle.bibliocommons.com"}]}'
+    )
+    report = await _health(tmp_path, rec.transport())
+    assert by_name(report)["login"]["detail"].startswith("saved session still valid")
+    assert rec.posts == []

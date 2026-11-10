@@ -53,10 +53,13 @@ async def run_health(config: Config, session: SplSession) -> dict[str, Any]:
     elif not library_ok:
         checks.append(_check("login", None, "not checked: the library is unreachable"))
     else:
-        had_session = session.has_session
+        logins_before = session.login_count
         try:
             await session.authenticated_get(config.holds_url)
-            how = "saved session still valid" if had_session else "logged in with the card and PIN"
+            if session.login_count > logins_before:
+                how = "logged in with the card and PIN"
+            else:
+                how = "saved session still valid"
             checks.append(_check("login", True, f"{how}; holds page readable"))
         except SplMcpError as exc:
             checks.append(_check("login", False, str(exc)))

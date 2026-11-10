@@ -233,6 +233,7 @@ def queue_summary(availability: dict[str, Any] | None) -> dict[str, Any]:
         "position_note": (
             "The library does not publish where a new hold would land. A new hold "
             "joins behind the existing holds; its exact position appears in "
-            "list_holds once it is placed."
+            "list_holds once it is placed. For an ebook, check_ebook_formats also "
+            "reports OverDrive's estimated wait in days."
         ),
     }
