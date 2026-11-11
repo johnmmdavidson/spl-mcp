@@ -26,7 +26,12 @@ def _check(name: str, ok: bool | None, detail: str) -> dict[str, Any]:
 
 async def run_health(config: Config, session: SplSession) -> dict[str, Any]:
     checks = [
-        _check("server", True, f"spl-mcp {__version__} is up; read_only={config.read_only}")
+        _check(
+            "server",
+            True,
+            f"spl-mcp {__version__} is up for {config.library_name}; "
+            f"read_only={config.read_only}",
+        )
     ]
 
     try:
@@ -46,7 +51,8 @@ async def run_health(config: Config, session: SplSession) -> dict[str, Any]:
                     "login",
                     None,
                     "not checked: no library credentials configured (Keychain service "
-                    f"{keychain_service() or '(off)'!r}, SPL_MCP_CARD_NUMBER/SPL_MCP_PIN, "
+                    f"{keychain_service(config.slug) or '(off)'!r}, "
+                    "SPL_MCP_CARD_NUMBER/SPL_MCP_PIN, "
                     "or secrets.toml)",
                 )
             )
@@ -71,12 +77,13 @@ async def run_health(config: Config, session: SplSession) -> dict[str, Any]:
         status = "down"
     else:
         status = "degraded"
-    return {"status": status, "checks": checks}
+    return {"library": config.library_name, "status": status, "checks": checks}
 
 
 def format_report(report: dict[str, Any]) -> str:
     marks = {True: "  ok  ", False: " FAIL ", None: " skip "}
-    lines = [f"[{marks[c['ok']]}] {c['check']}: {c['detail']}" for c in report["checks"]]
+    lines = [f"library: {report['library']}"] if report.get("library") else []
+    lines += [f"[{marks[c['ok']]}] {c['check']}: {c['detail']}" for c in report["checks"]]
     lines.append(f"status: {report['status']}")
     return "\n".join(lines)
 
