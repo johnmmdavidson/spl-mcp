@@ -118,7 +118,7 @@ class TestAnnotation:
 
     def test_eresource_url_is_picked_up_when_present(self, holds_state):
         holds_state["entities"]["bibs"] = {
-            "S30C2000001": {"availability": {"eresourceUrl": "https://example.invalid/borrow"}}
+            "S246C2000001": {"availability": {"eresourceUrl": "https://example.invalid/borrow"}}
         }
         item = parse_ready_to_borrow(holds_state, CONFIG).digital[0]
         assert item.eresource_url == "https://example.invalid/borrow"

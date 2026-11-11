@@ -6,52 +6,53 @@
     "catalogSearch": {
       "results": [
         {
-          "representative": "S30C3420266",
+          "representative": "S246C1354725",
           "manifestations": [
-            "S30C3599662",
-            "S30C3276462",
-            "S30C3420266",
-            "S30C2949104"
+            "S246C1354725",
+            "S246C1042277",
+            "S246C432512",
+            "S246C641290",
+            "S246C414338"
           ]
         },
         {
-          "representative": "S30C3750420",
+          "representative": "S246C821607",
           "manifestations": [
-            "S30C2575501",
-            "S30C3750420",
-            "S30C2632116",
-            "S30C3077551"
+            "S246C940348",
+            "S246C735909",
+            "S246C821607",
+            "S246C582035"
           ]
         },
         {
-          "representative": "S30C3963024",
+          "representative": "S246C1187916",
           "manifestations": [
-            "S30C3963024"
+            "S246C1187916"
           ]
         },
         {
-          "representative": "S30C3737078",
+          "representative": "S246C1031450",
           "manifestations": [
-            "S30C3737078"
+            "S246C1031450"
           ]
         },
         {
-          "representative": "S30C2221876",
+          "representative": "S246C325351",
           "manifestations": [
-            "S30C2221876"
+            "S246C325351"
           ]
         },
         {
-          "representative": "S30C3756491",
+          "representative": "S246C1046511",
           "manifestations": [
-            "S30C3756491",
-            "S30C2965313",
-            "S30C2629156"
+            "S246C1046511",
+            "S246C591748",
+            "S246C430723"
           ]
         }
       ],
       "pagination": {
-        "count": 396,
+        "count": 394,
         "limit": 20,
         "page": 1,
         "pages": 20,
@@ -61,183 +62,8 @@
   },
   "entities": {
     "bibs": {
-      "S30C3750420": {
-        "id": "S30C3750420",
-        "briefInfo": {
-          "title": "Dune Messiah",
-          "subtitle": "",
-          "authors": [
-            "Herbert, Frank"
-          ],
-          "format": "BK",
-          "publicationDate": "2019",
-          "edition": "Ace premium edition",
-          "groupKey": "dune_messiah\ufffdherbert_frank\ufffdtext_eng",
-          "isbns": [
-            "9780593098233",
-            "0593098234"
-          ],
-          "callNumber": "SCI-FIC HERBERT 2019",
-          "subjectHeadings": [
-            "Dune (Imaginary place) Fiction"
-          ],
-          "description": "Book Two in the Magnificent Dune Chronicles--the Bestselling Science Fiction Adventure of All TimeDune Messiah continues the story of Paul Atreides, better known--and feared--as the man christened Muad'Dib. As Emperor of the Known Universe, he possesses more power than a single man was ever meant to wield. Worshipped as a religious icon by the fanatical Fremens, Paul faces the enmity of the political houses he displaced when he assumed the throne--and a conspiracy conducted within his own sphere of influence.And even as House Atreides begins to crumble around him from the machinations of his enemies, the true threat to Paul comes to his lover, Chani, and the unborn heir to his family's dynasty ... Includes an introduction by Brian Herbert."
-        },
-        "availability": {
-          "status": "UNAVAILABLE",
-          "statusType": "UNAVAILABLE",
-          "bibType": "PHYSICAL",
-          "totalCopies": 4,
-          "availableCopies": 0,
-          "heldCopies": 31,
-          "circulationType": "REQUEST",
-          "eresourceUrl": null
-        },
-        "policy": {
-          "materialType": "PHYSICAL",
-          "provider": "ILS",
-          "holdable": true,
-          "materialPolicy": {
-            "supportsSuspendHold": false,
-            "supportsSuspendHoldStartDateEdit": false,
-            "requiresDuration": false
-          }
-        }
-      },
-      "S30C3420266": {
-        "id": "S30C3420266",
-        "briefInfo": {
-          "title": "Dune",
-          "subtitle": "",
-          "authors": [
-            "Herbert, Frank"
-          ],
-          "format": "BK",
-          "publicationDate": "2005",
-          "edition": "Ace trade paperback edition",
-          "groupKey": "dune\ufffdherbert_frank\ufffdtext_eng",
-          "isbns": [
-            "9780441013593",
-            "0441013597"
-          ],
-          "callNumber": "SCI-FIC HERBERT 2005",
-          "subjectHeadings": [
-            "Jesuits Fiction",
-            "Dune (Imaginary place) Fiction"
-          ],
-          "description": "Follows the adventures of Paul Atreides, the son of a betrayed duke given up for dead on a treacherous desert planet and adopted by its fierce, nomadic people, who help him unravel his most unexpected destiny."
-        },
-        "availability": {
-          "status": "UNAVAILABLE",
-          "statusType": "UNAVAILABLE",
-          "bibType": "PHYSICAL",
-          "totalCopies": 36,
-          "availableCopies": 0,
-          "heldCopies": 16,
-          "circulationType": "REQUEST",
-          "eresourceUrl": null
-        },
-        "policy": {
-          "materialType": "PHYSICAL",
-          "provider": "ILS",
-          "holdable": true,
-          "materialPolicy": {
-            "supportsSuspendHold": false,
-            "supportsSuspendHoldStartDateEdit": false,
-            "requiresDuration": false
-          }
-        }
-      },
-      "S30C2632116": {
-        "id": "S30C2632116",
-        "briefInfo": {
-          "title": "Dune Messiah",
-          "subtitle": "",
-          "authors": [
-            "Herbert, Frank"
-          ],
-          "format": "EBOOK",
-          "publicationDate": "2008",
-          "edition": "Ace hardcover edition",
-          "groupKey": "dune_messiah\ufffdherbert_frank\ufffdtext_eng",
-          "isbns": [
-            "9781429598910",
-            "1429598913",
-            "9781429598941",
-            "1429598948"
-          ],
-          "callNumber": "EBOOK SCI-FIC HERBERT 2008",
-          "subjectHeadings": [
-            "Dune (Imaginary place) Fiction"
-          ],
-          "description": "This second installment explores new developments on the desert planet Arrakis, with its intricate social order and its strange threatening environment. Dune Messiah picks up the story of the man known as Maud'dib, heir to a power unimaginable, bringing to fruition an ambition of unparalleled scale: the centuries-old scheme to create a superbeing who reigns not in the heavens but among men. But the question is: Do all paths of glory lead to the grave?"
-        },
-        "availability": {
-          "status": "UNAVAILABLE",
-          "statusType": "UNAVAILABLE",
-          "bibType": "DIGITAL",
-          "totalCopies": 9,
-          "availableCopies": 0,
-          "heldCopies": 46,
-          "circulationType": "REQUEST",
-          "eresourceUrl": null
-        },
-        "policy": {
-          "materialType": "DIGITAL",
-          "provider": "OverDriveAPI",
-          "holdable": true,
-          "materialPolicy": {
-            "supportsSuspendHold": true,
-            "supportsSuspendHoldStartDateEdit": false,
-            "requiresDuration": false
-          }
-        }
-      },
-      "S30C3077551": {
-        "id": "S30C3077551",
-        "briefInfo": {
-          "title": "Dune Messiah",
-          "subtitle": "",
-          "authors": [
-            "Herbert, Frank"
-          ],
-          "format": "BOOK_CD",
-          "publicationDate": "2007",
-          "edition": null,
-          "groupKey": "dune_messiah\ufffdherbert_frank\ufffdtext_eng",
-          "isbns": [
-            "9781427202369",
-            "1427202362"
-          ],
-          "callNumber": "CD SCI-FIC HERBERT",
-          "subjectHeadings": [
-            "Dune (Imaginary place) Fiction"
-          ],
-          "description": "\"Dune messiah\" picks up the story of the man known as Muad'Dib, heir to a power unimaginable, bringing to fruition an ambition of unparalleled scale: the centuries-old scheme to create a superbeing who reigns not in the heavens but among men. But the question is: Do all paths of glory lead to the grave?"
-        },
-        "availability": {
-          "status": "UNAVAILABLE",
-          "statusType": "UNAVAILABLE",
-          "bibType": "PHYSICAL",
-          "totalCopies": 2,
-          "availableCopies": 0,
-          "heldCopies": 1,
-          "circulationType": "REQUEST",
-          "eresourceUrl": null
-        },
-        "policy": {
-          "materialType": "PHYSICAL",
-          "provider": "ILS",
-          "holdable": true,
-          "materialPolicy": {
-            "supportsSuspendHold": false,
-            "supportsSuspendHoldStartDateEdit": false,
-            "requiresDuration": false
-          }
-        }
-      },
-      "S30C2575501": {
-        "id": "S30C2575501",
+      "S246C414338": {
+        "id": "S246C414338",
         "briefInfo": {
           "title": "Dune Messiah",
           "subtitle": "",
@@ -259,11 +85,54 @@
           "description": "The bestselling science fiction series of all time continues! This second installment explores new developments on the desert planet Arrakis, with its intricate social order and its strange threatening environment. Dune Messiah picks up the story of the man known as Maud'dib, heir to a power unimaginable, bringing to fruition an ambition of unparalleled scale: the centuries-old scheme to create a superbeing who reigns not in the heavens but among men. But the question is: Do all paths of glory lead to the grave?"
         },
         "availability": {
+          "status": "UNAVAILABLE",
+          "statusType": "UNAVAILABLE",
+          "bibType": "DIGITAL",
+          "totalCopies": 58,
+          "availableCopies": 0,
+          "heldCopies": 11,
+          "circulationType": "REQUEST",
+          "eresourceUrl": null
+        },
+        "policy": {
+          "materialType": "DIGITAL",
+          "provider": "OverDriveAPI",
+          "holdable": true,
+          "materialPolicy": {
+            "supportsSuspendHold": true,
+            "supportsSuspendHoldStartDateEdit": false,
+            "requiresDuration": false
+          }
+        }
+      },
+      "S246C940348": {
+        "id": "S246C940348",
+        "briefInfo": {
+          "title": "Dune",
+          "subtitle": "",
+          "authors": [
+            "Herbert, Frank"
+          ],
+          "format": "EAUDIOBOOK",
+          "publicationDate": "2015",
+          "edition": "Unabridged.",
+          "groupKey": "dune\ufffdherbert_frank\ufffdtext_eng",
+          "isbns": [
+            "9781427218360"
+          ],
+          "callNumber": "EAUDIO OVERDRIVE",
+          "subjectHeadings": [
+            "Jesuits Fiction.",
+            "Dune (Imaginary place) Fiction."
+          ],
+          "description": "Follows the adventures of Paul Atreides, the son of a betrayed duke given up for dead on a treacherous desert planet and adopted by its fierce, nomadic people, who help him unravel his most unexpected destiny"
+        },
+        "availability": {
           "status": "AVAILABLE",
           "statusType": "AVAILABLE",
           "bibType": "DIGITAL",
-          "totalCopies": 58,
-          "availableCopies": 5,
+          "totalCopies": 227,
+          "availableCopies": 1,
           "heldCopies": 0,
           "circulationType": "REQUEST",
           "eresourceUrl": null
@@ -279,84 +148,124 @@
           }
         }
       },
-      "S30C2221876": {
-        "id": "S30C2221876",
+      "S246C582035": {
+        "id": "S246C582035",
         "briefInfo": {
           "title": "Dune",
           "subtitle": "",
-          "authors": [],
-          "format": "DVD",
-          "publicationDate": null,
-          "edition": "Widescreen edition",
-          "groupKey": "dune\ufffddavid_lynch\ufffdvideo",
+          "authors": [
+            "Herbert, Frank"
+          ],
+          "format": "EBOOK",
+          "publicationDate": "1990",
+          "edition": "Special twenty-fifth anniversary edition.",
+          "groupKey": "dune\ufffdherbert_frank\ufffdtext_eng",
           "isbns": [
-            "9780783226064",
-            "0783226063"
+            "9781101658055",
+            "1101658053"
           ],
-          "callNumber": "DVD DUNE",
+          "callNumber": "EBOOK OVERDRIVE",
           "subjectHeadings": [
-            "Dune (Imaginary place) Drama",
-            "Space flight Drama",
-            "Revolutions Drama"
+            "Dune (Imaginary place) Fiction."
           ],
-          "description": "Paul Atreides, heir of the house Atreides survives an assasination attempt by the rival house Harkkonen, and disappears into the native population of the planet called Dune. He becomes a charismatic figure leading the desert Fremen to oust the house Harkkonen occupying Dune and becomes not only a civil leader but a religious cult figure and founder of a dynasty."
+          "description": "This Hugo and Nebula Award winner tells the sweeping tale of a desert planet called Arrakis, the focus of an intricate power struggle in a byzantine interstellar empire. Arrakis is the sole source of Melange, the \"spice of spices.\" Melange is necessary for interstellar travel and grants psychic powers and longevity, so whoever controls it wields great influence. The troubles begin when stewardship of Arrakis is transferred by the Emperor from the Harkonnen Noble House to House Atreides. The Harkonnens don't want to give up their privilege, though, and through sabotage and treachery they cast young Duke Paul Atreides out into the planet's harsh environment to die. There he falls in with the Fremen, a tribe of desert dwellers who become the basis of the army with which he will reclaim what's rightfully his. Paul Atreides, though, is far more than just a usurped duke. He might be the end product of a very long-term genetic experiment designed to breed a super human; he might be a messiah. His struggle is at the center of a nexus of powerful people and events, and the repercussions will be felt throughout the Imperium."
         },
         "availability": {
-          "status": "AVAILABLE",
-          "statusType": "AVAILABLE",
-          "bibType": "PHYSICAL",
+          "status": "UNAVAILABLE",
+          "statusType": "UNAVAILABLE",
+          "bibType": "DIGITAL",
           "totalCopies": 15,
-          "availableCopies": 5,
-          "heldCopies": 1,
+          "availableCopies": 0,
+          "heldCopies": 63,
           "circulationType": "REQUEST",
           "eresourceUrl": null
         },
         "policy": {
-          "materialType": "PHYSICAL",
-          "provider": "ILS",
+          "materialType": "DIGITAL",
+          "provider": "OverDriveAPI",
           "holdable": true,
           "materialPolicy": {
-            "supportsSuspendHold": false,
+            "supportsSuspendHold": true,
             "supportsSuspendHoldStartDateEdit": false,
             "requiresDuration": false
           }
         }
       },
-      "S30C3756491": {
-        "id": "S30C3756491",
+      "S246C432512": {
+        "id": "S246C432512",
         "briefInfo": {
-          "title": "Children of Dune",
+          "title": "Dune Messiah",
+          "subtitle": "",
+          "authors": [
+            "Herbert, Frank"
+          ],
+          "format": "EBOOK",
+          "publicationDate": "2008",
+          "edition": "Ace hardcover edition.",
+          "groupKey": "dune_messiah\ufffdherbert_frank\ufffdtext_eng",
+          "isbns": [
+            "9781429598910",
+            "1429598913",
+            "9781429598941",
+            "1429598948"
+          ],
+          "callNumber": "EBOOK SCI-FIC HERBERT 2008",
+          "subjectHeadings": [
+            "Dune (Imaginary place) Fiction"
+          ],
+          "description": "This second installment explores new developments on the desert planet Arrakis, with its intricate social order and its strange threatening environment. Dune Messiah picks up the story of the man known as Maud'dib, heir to a power unimaginable, bringing to fruition an ambition of unparalleled scale: the centuries-old scheme to create a superbeing who reigns not in the heavens but among men. But the question is: Do all paths of glory lead to the grave?"
+        },
+        "availability": {
+          "status": "UNAVAILABLE",
+          "statusType": "UNAVAILABLE",
+          "bibType": "DIGITAL",
+          "totalCopies": 9,
+          "availableCopies": 0,
+          "heldCopies": 35,
+          "circulationType": "REQUEST",
+          "eresourceUrl": null
+        },
+        "policy": {
+          "materialType": "DIGITAL",
+          "provider": "OverDriveAPI",
+          "holdable": true,
+          "materialPolicy": {
+            "supportsSuspendHold": true,
+            "supportsSuspendHoldStartDateEdit": false,
+            "requiresDuration": false
+          }
+        }
+      },
+      "S246C821607": {
+        "id": "S246C821607",
+        "briefInfo": {
+          "title": "Dune",
           "subtitle": "",
           "authors": [
             "Herbert, Frank"
           ],
           "format": "BK",
-          "publicationDate": "2020",
-          "edition": "Ace trade paperback edition",
-          "groupKey": "children_of_dune\ufffdherbert_frank\ufffdtext_eng",
+          "publicationDate": "2005",
+          "edition": "Ace trade paperback edition.",
+          "groupKey": "dune\ufffdherbert_frank\ufffdtext_eng",
           "isbns": [
-            "9780593201749",
-            "0593201744"
+            "9780441013593",
+            "0441013597"
           ],
-          "callNumber": "SCI-FIC HERBERT 2020",
+          "callNumber": "SCI-FIC HERBERT 2005",
           "subjectHeadings": [
-            "Dune (Imaginary place) Fiction",
-            "Twins Fiction",
-            "Missing persons Fiction",
-            "Prophecy Fiction",
-            "Precognition Fiction",
-            "Life on other planets Fiction",
-            "Imaginary wars and battles Fiction"
+            "Jesuits Fiction.",
+            "Dune (Imaginary place) Fiction."
           ],
-          "description": "The Children of Dune are twin siblings Leto and Ghanima Atreides, whose father, the Emperor Paul Muad'Dib, disappeared into the desert wastelands of Arrakis nine years ago. Like their father, the twins possess supernormal abilities -- making them valuable to their manipulative aunt Alia, who rules the Empire in the name of the House Atreides. Facing treason and rebellion on two fronts, Alia's rule is not absolute. The displaced house Corrino is plotting to regain the throne while the fanatical Fremen are being provoked into open revolt by the enigmatic figure known only as The Preacher. Alia believes that by obtaining the secrets of the twins prophetic visions, she can maintain control over her dynasty. But Leto and Ghanima have their own plans for their visions -- and their destinies ... -- Provided by publisher."
+          "description": "Follows the adventures of Paul Atreides, the son of a betrayed duke given up for dead on a treacherous desert planet and adopted by its fierce, nomadic people, who help him unravel his most unexpected destiny."
         },
         "availability": {
           "status": "UNAVAILABLE",
           "statusType": "UNAVAILABLE",
           "bibType": "PHYSICAL",
-          "totalCopies": 0,
+          "totalCopies": 30,
           "availableCopies": 0,
-          "heldCopies": 8,
+          "heldCopies": 3,
           "circulationType": "REQUEST",
           "eresourceUrl": null
         },
@@ -371,8 +280,8 @@
           }
         }
       },
-      "S30C2629156": {
-        "id": "S30C2629156",
+      "S246C430723": {
+        "id": "S246C430723",
         "briefInfo": {
           "title": "Children of Dune",
           "subtitle": "",
@@ -403,7 +312,7 @@
           "bibType": "DIGITAL",
           "totalCopies": 5,
           "availableCopies": 0,
-          "heldCopies": 14,
+          "heldCopies": 7,
           "circulationType": "REQUEST",
           "eresourceUrl": null
         },
@@ -418,219 +327,8 @@
           }
         }
       },
-      "S30C3737078": {
-        "id": "S30C3737078",
-        "briefInfo": {
-          "title": "Dune",
-          "subtitle": "",
-          "authors": [],
-          "format": "DVD",
-          "publicationDate": "2022",
-          "edition": null,
-          "groupKey": "dune\ufffddenis_villeneuve\ufffdvideo",
-          "isbns": [],
-          "callNumber": "DVD DUNE",
-          "subjectHeadings": [
-            "Dune (Imaginary place) Drama",
-            "Interplanetary voyages Drama",
-            "Political corruption Drama",
-            "Prophecies Drama"
-          ],
-          "description": "Paul Atreides, a brilliant, gifted young man born into a destiny beyond his understanding, must travel to the most dangerous planet in the universe to ensure the future of his family and people. As malevolent forces explode into conflict over the planet's exclusive supply of the most precious resource in existence, only those who can conquer their fear will survive."
-        },
-        "availability": {
-          "status": "AVAILABLE",
-          "statusType": "AVAILABLE",
-          "bibType": "PHYSICAL",
-          "totalCopies": 18,
-          "availableCopies": 7,
-          "heldCopies": 4,
-          "circulationType": "REQUEST",
-          "eresourceUrl": null
-        },
-        "policy": {
-          "materialType": "PHYSICAL",
-          "provider": "ILS",
-          "holdable": true,
-          "materialPolicy": {
-            "supportsSuspendHold": false,
-            "supportsSuspendHoldStartDateEdit": false,
-            "requiresDuration": false
-          }
-        }
-      },
-      "S30C2949104": {
-        "id": "S30C2949104",
-        "briefInfo": {
-          "title": "Dune",
-          "subtitle": "",
-          "authors": [
-            "Herbert, Frank"
-          ],
-          "format": "EBOOK",
-          "publicationDate": "1990",
-          "edition": "Special twenty-fifth anniversary edition",
-          "groupKey": "dune\ufffdherbert_frank\ufffdtext_eng",
-          "isbns": [
-            "9781101658055",
-            "1101658053"
-          ],
-          "callNumber": "EBOOK OVERDRIVE",
-          "subjectHeadings": [
-            "Dune (Imaginary place) Fiction"
-          ],
-          "description": "This Hugo and Nebula Award winner tells the sweeping tale of a desert planet called Arrakis, the focus of an intricate power struggle in a byzantine interstellar empire. Arrakis is the sole source of Melange, the \"spice of spices.\" Melange is necessary for interstellar travel and grants psychic powers and longevity, so whoever controls it wields great influence. The troubles begin when stewardship of Arrakis is transferred by the Emperor from the Harkonnen Noble House to House Atreides. The Harkonnens don't want to give up their privilege, though, and through sabotage and treachery they cast young Duke Paul Atreides out into the planet's harsh environment to die. There he falls in with the Fremen, a tribe of desert dwellers who become the basis of the army with which he will reclaim what's rightfully his. Paul Atreides, though, is far more than just a usurped duke. He might be the end product of a very long-term genetic experiment designed to breed a super human; he might be a messiah. His struggle is at the center of a nexus of powerful people and events, and the repercussions will be felt throughout the Imperium."
-        },
-        "availability": {
-          "status": "UNAVAILABLE",
-          "statusType": "UNAVAILABLE",
-          "bibType": "DIGITAL",
-          "totalCopies": 15,
-          "availableCopies": 0,
-          "heldCopies": 74,
-          "circulationType": "REQUEST",
-          "eresourceUrl": null
-        },
-        "policy": {
-          "materialType": "DIGITAL",
-          "provider": "OverDriveAPI",
-          "holdable": true,
-          "materialPolicy": {
-            "supportsSuspendHold": true,
-            "supportsSuspendHoldStartDateEdit": false,
-            "requiresDuration": false
-          }
-        }
-      },
-      "S30C3963024": {
-        "id": "S30C3963024",
-        "briefInfo": {
-          "title": "Dune",
-          "subtitle": "Part Two",
-          "authors": [],
-          "format": "DVD",
-          "publicationDate": "2024",
-          "edition": null,
-          "groupKey": "dune_part_2\ufffddenis_villeneuve\ufffdvideo",
-          "isbns": [],
-          "callNumber": "DVD DUNE Part 2",
-          "subjectHeadings": [
-            "Dune (Imaginary place) Drama",
-            "Interplanetary voyages Drama",
-            "Political corruption Drama",
-            "Prophecies Drama"
-          ],
-          "description": "Paul Atreides, alongside Chani and the Fremen, seeks vengeance against the conspirators who destroyed his family, while grappling with the dilemma of choosing between his love for Chani and the fate of the universe. Amidst the turmoil caused by the destruction of House Atreides by House Harkonnen, Paul and his mother Lady Jessica integrate into Fremen society on Arrakis, where they confront suspicion and skepticism while fulfilling prophecies and facing the challenges of the desert planet. As Paul embraces Fremen customs and earns their respect, his bond with Chani deepens, all while the political intrigue involving the Harkonnens and the Bene Gesserit unfolds around them."
-        },
-        "availability": {
-          "status": "AVAILABLE",
-          "statusType": "AVAILABLE",
-          "bibType": "PHYSICAL",
-          "totalCopies": 34,
-          "availableCopies": 11,
-          "heldCopies": 10,
-          "circulationType": "REQUEST",
-          "eresourceUrl": null
-        },
-        "policy": {
-          "materialType": "PHYSICAL",
-          "provider": "ILS",
-          "holdable": true,
-          "materialPolicy": {
-            "supportsSuspendHold": false,
-            "supportsSuspendHoldStartDateEdit": false,
-            "requiresDuration": false
-          }
-        }
-      },
-      "S30C2965313": {
-        "id": "S30C2965313",
-        "briefInfo": {
-          "title": "Children of Dune",
-          "subtitle": "",
-          "authors": [
-            "Herbert, Frank"
-          ],
-          "format": "EAUDIOBOOK",
-          "publicationDate": "2008",
-          "edition": null,
-          "groupKey": "children_of_dune\ufffdherbert_frank\ufffdtext_eng",
-          "isbns": [
-            "9781427218162",
-            "1427218161"
-          ],
-          "callNumber": "EAUDIO OVERDRIVE",
-          "subjectHeadings": [
-            "Dune (Imaginary place) Fiction"
-          ],
-          "description": "In this third installment, the sand-blasted world of Arrakis has become green, watered, and fertile. Old Paul Atreides, who led the desert Fremen to political and religious domination of the galaxy, is gone. But for the children of Dune, the very blossoming of their land contains the seeds of its own destruction. The altered climate is destroying the giant sandworms, and this in turn is disastrous for the planet's economy. Leto and Ghanima, Paul Atreides's twin children and his heirs, can see possible solutions--but fanatics begin to challenge the rule of the all-powerful Atreides empire, and more than economic disaster threatens."
-        },
-        "availability": {
-          "status": "UNAVAILABLE",
-          "statusType": "UNAVAILABLE",
-          "bibType": "DIGITAL",
-          "totalCopies": 23,
-          "availableCopies": 0,
-          "heldCopies": 1,
-          "circulationType": "REQUEST",
-          "eresourceUrl": null
-        },
-        "policy": {
-          "materialType": "DIGITAL",
-          "provider": "OverDriveAPI",
-          "holdable": true,
-          "materialPolicy": {
-            "supportsSuspendHold": true,
-            "supportsSuspendHoldStartDateEdit": false,
-            "requiresDuration": false
-          }
-        }
-      },
-      "S30C3599662": {
-        "id": "S30C3599662",
-        "briefInfo": {
-          "title": "Dune",
-          "subtitle": "",
-          "authors": [
-            "Herbert, Frank"
-          ],
-          "format": "EAUDIOBOOK",
-          "publicationDate": "2015",
-          "edition": "Unabridged",
-          "groupKey": "dune\ufffdherbert_frank\ufffdtext_eng",
-          "isbns": [
-            "9781427218360"
-          ],
-          "callNumber": "EAUDIO OVERDRIVE",
-          "subjectHeadings": [
-            "Jesuits Fiction",
-            "Dune (Imaginary place) Fiction"
-          ],
-          "description": "Follows the adventures of Paul Atreides, the son of a betrayed duke given up for dead on a treacherous desert planet and adopted by its fierce, nomadic people, who help him unravel his most unexpected destiny"
-        },
-        "availability": {
-          "status": "AVAILABLE",
-          "statusType": "AVAILABLE",
-          "bibType": "DIGITAL",
-          "totalCopies": 227,
-          "availableCopies": 7,
-          "heldCopies": 2,
-          "circulationType": "REQUEST",
-          "eresourceUrl": null
-        },
-        "policy": {
-          "materialType": "DIGITAL",
-          "provider": "OverDriveAPI",
-          "holdable": true,
-          "materialPolicy": {
-            "supportsSuspendHold": true,
-            "supportsSuspendHoldStartDateEdit": false,
-            "requiresDuration": false
-          }
-        }
-      },
-      "S30C3276462": {
-        "id": "S30C3276462",
+      "S246C735909": {
+        "id": "S246C735909",
         "briefInfo": {
           "title": "Dune",
           "subtitle": "",
@@ -647,9 +345,9 @@
           ],
           "callNumber": "CD SCI-FIC HERBERT",
           "subjectHeadings": [
-            "Dune (Imaginary place) Fiction",
-            "Life on other planets Fiction",
-            "Robots Fiction"
+            "Dune (Imaginary place) Fiction.",
+            "Life on other planets Fiction.",
+            "Robots Fiction."
           ],
           "description": "Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides, who would become the mysterious man known as Muad'Dib. He would avenge the traitorous plot against his noble family -- and would bring to fruition humankind's most ancient and unattainable dream."
         },
@@ -660,6 +358,356 @@
           "totalCopies": 1,
           "availableCopies": 0,
           "heldCopies": 0,
+          "circulationType": "NON_CIRCULATING",
+          "eresourceUrl": null
+        },
+        "policy": {
+          "materialType": "PHYSICAL",
+          "provider": "ILS",
+          "holdable": false,
+          "materialPolicy": {
+            "supportsSuspendHold": false,
+            "supportsSuspendHoldStartDateEdit": false,
+            "requiresDuration": false
+          }
+        }
+      },
+      "S246C591748": {
+        "id": "S246C591748",
+        "briefInfo": {
+          "title": "Children of Dune",
+          "subtitle": "",
+          "authors": [
+            "Herbert, Frank"
+          ],
+          "format": "EAUDIOBOOK",
+          "publicationDate": "2008",
+          "edition": null,
+          "groupKey": "children_of_dune\ufffdherbert_frank\ufffdtext_eng",
+          "isbns": [
+            "9781427218162",
+            "1427218161"
+          ],
+          "callNumber": "EAUDIO OVERDRIVE",
+          "subjectHeadings": [
+            "Dune (Imaginary place) Fiction."
+          ],
+          "description": "In this third installment, the sand-blasted world of Arrakis has become green, watered, and fertile. Old Paul Atreides, who led the desert Fremen to political and religious domination of the galaxy, is gone. But for the children of Dune, the very blossoming of their land contains the seeds of its own destruction. The altered climate is destroying the giant sandworms, and this in turn is disastrous for the planet's economy. Leto and Ghanima, Paul Atreides's twin children and his heirs, can see possible solutions--but fanatics begin to challenge the rule of the all-powerful Atreides empire, and more than economic disaster threatens."
+        },
+        "availability": {
+          "status": "UNAVAILABLE",
+          "statusType": "UNAVAILABLE",
+          "bibType": "DIGITAL",
+          "totalCopies": 23,
+          "availableCopies": 0,
+          "heldCopies": 4,
+          "circulationType": "REQUEST",
+          "eresourceUrl": null
+        },
+        "policy": {
+          "materialType": "DIGITAL",
+          "provider": "OverDriveAPI",
+          "holdable": true,
+          "materialPolicy": {
+            "supportsSuspendHold": true,
+            "supportsSuspendHoldStartDateEdit": false,
+            "requiresDuration": false
+          }
+        }
+      },
+      "S246C1031450": {
+        "id": "S246C1031450",
+        "briefInfo": {
+          "title": "Dune",
+          "subtitle": "",
+          "authors": [],
+          "format": "DVD",
+          "publicationDate": "2022",
+          "edition": null,
+          "groupKey": "dune\ufffddenis_villeneuve\ufffdvideo",
+          "isbns": [],
+          "callNumber": "DVD DUNE",
+          "subjectHeadings": [
+            "Dune (Imaginary place) Drama.",
+            "Interplanetary voyages Drama.",
+            "Political corruption Drama.",
+            "Prophecies Drama."
+          ],
+          "description": "Paul Atreides, a brilliant, gifted young man born into a destiny beyond his understanding, must travel to the most dangerous planet in the universe to ensure the future of his family and people. As malevolent forces explode into conflict over the planet's exclusive supply of the most precious resource in existence, only those who can conquer their fear will survive."
+        },
+        "availability": {
+          "status": "UNAVAILABLE",
+          "statusType": "UNAVAILABLE",
+          "bibType": "PHYSICAL",
+          "totalCopies": 18,
+          "availableCopies": 0,
+          "heldCopies": 3,
+          "circulationType": "REQUEST",
+          "eresourceUrl": null
+        },
+        "policy": {
+          "materialType": "PHYSICAL",
+          "provider": "ILS",
+          "holdable": true,
+          "materialPolicy": {
+            "supportsSuspendHold": false,
+            "supportsSuspendHoldStartDateEdit": false,
+            "requiresDuration": false
+          }
+        }
+      },
+      "S246C1046511": {
+        "id": "S246C1046511",
+        "briefInfo": {
+          "title": "Children of Dune",
+          "subtitle": "",
+          "authors": [
+            "Herbert, Frank"
+          ],
+          "format": "BK",
+          "publicationDate": "2020",
+          "edition": "Ace trade paperback edition.",
+          "groupKey": "children_of_dune\ufffdherbert_frank\ufffdtext_eng",
+          "isbns": [
+            "9780593201749",
+            "0593201744"
+          ],
+          "callNumber": "SCI-FIC HERBERT 2020",
+          "subjectHeadings": [
+            "Dune (Imaginary place) Fiction.",
+            "Twins Fiction.",
+            "Missing persons Fiction.",
+            "Prophecy Fiction.",
+            "Precognition Fiction.",
+            "Life on other planets Fiction.",
+            "Imaginary wars and battles Fiction."
+          ],
+          "description": "The Children of Dune are twin siblings Leto and Ghanima Atreides, whose father, the Emperor Paul Muad'Dib, disappeared into the desert wastelands of Arrakis nine years ago. Like their father, the twins possess supernormal abilities -- making them valuable to their manipulative aunt Alia, who rules the Empire in the name of the House Atreides. Facing treason and rebellion on two fronts, Alia's rule is not absolute. The displaced house Corrino is plotting to regain the throne while the fanatical Fremen are being provoked into open revolt by the enigmatic figure known only as The Preacher. Alia believes that by obtaining the secrets of the twins prophetic visions, she can maintain control over her dynasty. But Leto and Ghanima have their own plans for their visions -- and their destinies ... -- Provided by publisher."
+        },
+        "availability": {
+          "status": "UNAVAILABLE",
+          "statusType": "UNAVAILABLE",
+          "bibType": "PHYSICAL",
+          "totalCopies": 10,
+          "availableCopies": 0,
+          "heldCopies": 2,
+          "circulationType": "REQUEST",
+          "eresourceUrl": null
+        },
+        "policy": {
+          "materialType": "PHYSICAL",
+          "provider": "ILS",
+          "holdable": true,
+          "materialPolicy": {
+            "supportsSuspendHold": false,
+            "supportsSuspendHoldStartDateEdit": false,
+            "requiresDuration": false
+          }
+        }
+      },
+      "S246C1042277": {
+        "id": "S246C1042277",
+        "briefInfo": {
+          "title": "Dune Messiah",
+          "subtitle": "",
+          "authors": [
+            "Herbert, Frank"
+          ],
+          "format": "BK",
+          "publicationDate": "2019",
+          "edition": "Ace premium edition.",
+          "groupKey": "dune_messiah\ufffdherbert_frank\ufffdtext_eng",
+          "isbns": [
+            "9780593098233",
+            "0593098234"
+          ],
+          "callNumber": "SCI-FIC HERBERT 2019",
+          "subjectHeadings": [
+            "Dune (Imaginary place) Fiction"
+          ],
+          "description": "Book Two in the Magnificent Dune Chronicles--the Bestselling Science Fiction Adventure of All TimeDune Messiah continues the story of Paul Atreides, better known--and feared--as the man christened Muad'Dib. As Emperor of the Known Universe, he possesses more power than a single man was ever meant to wield. Worshipped as a religious icon by the fanatical Fremens, Paul faces the enmity of the political houses he displaced when he assumed the throne--and a conspiracy conducted within his own sphere of influence.And even as House Atreides begins to crumble around him from the machinations of his enemies, the true threat to Paul comes to his lover, Chani, and the unborn heir to his family's dynasty ... Includes an introduction by Brian Herbert."
+        },
+        "availability": {
+          "status": "UNAVAILABLE",
+          "statusType": "UNAVAILABLE",
+          "bibType": "PHYSICAL",
+          "totalCopies": 4,
+          "availableCopies": 0,
+          "heldCopies": 3,
+          "circulationType": "REQUEST",
+          "eresourceUrl": null
+        },
+        "policy": {
+          "materialType": "PHYSICAL",
+          "provider": "ILS",
+          "holdable": true,
+          "materialPolicy": {
+            "supportsSuspendHold": false,
+            "supportsSuspendHoldStartDateEdit": false,
+            "requiresDuration": false
+          }
+        }
+      },
+      "S246C1354725": {
+        "id": "S246C1354725",
+        "briefInfo": {
+          "title": "Dune Messiah",
+          "subtitle": "",
+          "authors": [
+            "Herbert, Frank"
+          ],
+          "format": "BK",
+          "publicationDate": "2020",
+          "edition": "Ace trade paperback edition.",
+          "groupKey": "dune_messiah\ufffdherbert_frank\ufffdtext_eng",
+          "isbns": [
+            "9780593201732",
+            "0593201736"
+          ],
+          "callNumber": "SCI-FIC HERBERT 2020",
+          "subjectHeadings": [
+            "Dune (Imaginary place) Fiction",
+            "Imaginary wars and battles Fiction.",
+            "Life on other planets Fiction"
+          ],
+          "description": "\"Dune Messiah continues the story of Paul Atreides, better known--and feared--as the man christened Muad'Dib. As Emperor of the known universe, he possesses more power than a single man was ever meant to wield. Worshipped as a religious icon by the fanatical Fremen, Paul faces the enmity of the political houses he displaced when he assumed the throne--and a conspiracy conducted within his own sphere of influence. And even as House Atreides begins to crumble around him from the machinations of his enemies, the true threat to Paul comes to his lover Chani and the unborn heir to his family's dynasty....\" -- Provided by publisher."
+        },
+        "availability": {
+          "status": "UNAVAILABLE",
+          "statusType": "UNAVAILABLE",
+          "bibType": "PHYSICAL",
+          "totalCopies": 11,
+          "availableCopies": 0,
+          "heldCopies": 23,
+          "circulationType": "REQUEST",
+          "eresourceUrl": null
+        },
+        "policy": {
+          "materialType": "PHYSICAL",
+          "provider": "ILS",
+          "holdable": true,
+          "materialPolicy": {
+            "supportsSuspendHold": false,
+            "supportsSuspendHoldStartDateEdit": false,
+            "requiresDuration": false
+          }
+        }
+      },
+      "S246C641290": {
+        "id": "S246C641290",
+        "briefInfo": {
+          "title": "Dune Messiah",
+          "subtitle": "",
+          "authors": [
+            "Herbert, Frank"
+          ],
+          "format": "BOOK_CD",
+          "publicationDate": "2007",
+          "edition": null,
+          "groupKey": "dune_messiah\ufffdherbert_frank\ufffdtext_eng",
+          "isbns": [
+            "9781427202369",
+            "1427202362",
+            "9780792750215",
+            "0792750217"
+          ],
+          "callNumber": "CD SCI-FIC HERBERT",
+          "subjectHeadings": [
+            "Dune (Imaginary place) Fiction."
+          ],
+          "description": "\"Dune messiah\" picks up the story of the man known as Muad'Dib, heir to a power unimaginable, bringing to fruition an ambition of unparalleled scale: the centuries-old scheme to create a superbeing who reigns not in the heavens but among men. But the question is: Do all paths of glory lead to the grave?"
+        },
+        "availability": {
+          "status": "UNAVAILABLE",
+          "statusType": "UNAVAILABLE",
+          "bibType": "PHYSICAL",
+          "totalCopies": 1,
+          "availableCopies": 0,
+          "heldCopies": 0,
+          "circulationType": "REQUEST",
+          "eresourceUrl": null
+        },
+        "policy": {
+          "materialType": "PHYSICAL",
+          "provider": "ILS",
+          "holdable": true,
+          "materialPolicy": {
+            "supportsSuspendHold": false,
+            "supportsSuspendHoldStartDateEdit": false,
+            "requiresDuration": false
+          }
+        }
+      },
+      "S246C325351": {
+        "id": "S246C325351",
+        "briefInfo": {
+          "title": "Dune",
+          "subtitle": "",
+          "authors": [],
+          "format": "DVD",
+          "publicationDate": null,
+          "edition": "Widescreen edition.",
+          "groupKey": "dune\ufffddavid_lynch\ufffdvideo",
+          "isbns": [
+            "9780783226064",
+            "0783226063"
+          ],
+          "callNumber": "DVD DUNE",
+          "subjectHeadings": [
+            "Dune (Imaginary place) Drama.",
+            "Space flight Drama.",
+            "Revolutions Drama."
+          ],
+          "description": "Paul Atreides, heir of the house Atreides survives an assasination attempt by the rival house Harkkonen, and disappears into the native population of the planet called Dune. He becomes a charismatic figure leading the desert Fremen to oust the house Harkkonen occupying Dune and becomes not only a civil leader but a religious cult figure and founder of a dynasty."
+        },
+        "availability": {
+          "status": "AVAILABLE",
+          "statusType": "AVAILABLE",
+          "bibType": "PHYSICAL",
+          "totalCopies": 15,
+          "availableCopies": 2,
+          "heldCopies": 2,
+          "circulationType": "REQUEST",
+          "eresourceUrl": null
+        },
+        "policy": {
+          "materialType": "PHYSICAL",
+          "provider": "ILS",
+          "holdable": true,
+          "materialPolicy": {
+            "supportsSuspendHold": false,
+            "supportsSuspendHoldStartDateEdit": false,
+            "requiresDuration": false
+          }
+        }
+      },
+      "S246C1187916": {
+        "id": "S246C1187916",
+        "briefInfo": {
+          "title": "Dune",
+          "subtitle": "Part Two",
+          "authors": [],
+          "format": "DVD",
+          "publicationDate": "2024",
+          "edition": null,
+          "groupKey": "dune_part_2\ufffddenis_villeneuve\ufffdvideo",
+          "isbns": [],
+          "callNumber": "DVD DUNE Part 2",
+          "subjectHeadings": [
+            "Dune (Imaginary place) Drama.",
+            "Interplanetary voyages Drama.",
+            "Political corruption Drama.",
+            "Prophecies Drama."
+          ],
+          "description": "Paul Atreides, alongside Chani and the Fremen, seeks vengeance against the conspirators who destroyed his family, while grappling with the dilemma of choosing between his love for Chani and the fate of the universe. Amidst the turmoil caused by the destruction of House Atreides by House Harkonnen, Paul and his mother Lady Jessica integrate into Fremen society on Arrakis, where they confront suspicion and skepticism while fulfilling prophecies and facing the challenges of the desert planet. As Paul embraces Fremen customs and earns their respect, his bond with Chani deepens, all while the political intrigue involving the Harkonnens and the Bene Gesserit unfolds around them."
+        },
+        "availability": {
+          "status": "AVAILABLE",
+          "statusType": "AVAILABLE",
+          "bibType": "PHYSICAL",
+          "totalCopies": 33,
+          "availableCopies": 6,
+          "heldCopies": 2,
           "circulationType": "REQUEST",
           "eresourceUrl": null
         },

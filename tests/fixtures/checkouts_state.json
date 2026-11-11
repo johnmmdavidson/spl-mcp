@@ -16,7 +16,7 @@
         "materialType": "PHYSICAL",
         "status": "OUT",
         "bibTitle": "An Example Borrowed Book",
-        "metadataId": "S30C1000001",
+        "metadataId": "S246C1000001",
         "dueDate": "2026-08-20",
         "timesRenewed": 1,
         "fines": 0,
@@ -38,7 +38,7 @@
         "materialType": "PHYSICAL",
         "status": "OVERDUE",
         "bibTitle": "A Late Book",
-        "metadataId": "S30C1000003",
+        "metadataId": "S246C1000003",
         "dueDate": "2026-07-01",
         "timesRenewed": 3,
         "fines": 2.5,
@@ -60,7 +60,7 @@
         "materialType": "DIGITAL",
         "status": "OUT",
         "bibTitle": "An Example Borrowed Ebook",
-        "metadataId": "S30C2000001",
+        "metadataId": "S246C2000001",
         "dueDate": "2026-08-05",
         "timesRenewed": 0,
         "fines": 0,
@@ -82,7 +82,7 @@
         "materialType": "DIGITAL",
         "status": "OUT",
         "bibTitle": "An Ebook With A Format Chosen",
-        "metadataId": "S30C2000002",
+        "metadataId": "S246C2000002",
         "dueDate": "2026-08-09",
         "timesRenewed": 0,
         "fines": 0,
@@ -101,8 +101,8 @@
       }
     },
     "bibs": {
-      "S30C1000001": {
-        "id": "S30C1000001",
+      "S246C1000001": {
+        "id": "S246C1000001",
         "briefInfo": {
           "title": "An Example Borrowed Book",
           "authors": ["Example, Ann"],
@@ -110,8 +110,8 @@
         },
         "policy": { "materialType": "PHYSICAL", "provider": "ILS" }
       },
-      "S30C1000003": {
-        "id": "S30C1000003",
+      "S246C1000003": {
+        "id": "S246C1000003",
         "briefInfo": {
           "title": "A Late Book",
           "authors": ["Tardy, Tom"],
@@ -119,8 +119,8 @@
         },
         "policy": { "materialType": "PHYSICAL", "provider": "ILS" }
       },
-      "S30C2000001": {
-        "id": "S30C2000001",
+      "S246C2000001": {
+        "id": "S246C2000001",
         "briefInfo": {
           "title": "An Example Borrowed Ebook",
           "authors": ["Digital, Dana"],
@@ -128,8 +128,8 @@
         },
         "policy": { "materialType": "DIGITAL", "provider": "OverDriveAPI" }
       },
-      "S30C2000002": {
-        "id": "S30C2000002",
+      "S246C2000002": {
+        "id": "S246C2000002",
         "briefInfo": {
           "title": "An Ebook With A Format Chosen",
           "authors": ["Epub, Eli"],

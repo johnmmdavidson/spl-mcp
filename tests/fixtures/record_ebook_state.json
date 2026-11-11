@@ -4,8 +4,8 @@
   },
   "entities": {
     "bibs": {
-      "S30C2949104": {
-        "id": "S30C2949104",
+      "S246C582035": {
+        "id": "S246C582035",
         "briefInfo": {
           "title": "Dune",
           "subtitle": "",
@@ -14,7 +14,7 @@
           ],
           "format": "EBOOK",
           "publicationDate": "1990",
-          "edition": "Special twenty-fifth anniversary edition",
+          "edition": "Special twenty-fifth anniversary edition.",
           "groupKey": "dune\ufffdherbert_frank\ufffdtext_eng",
           "isbns": [
             "9781101658055",
@@ -22,7 +22,7 @@
           ],
           "callNumber": "EBOOK OVERDRIVE",
           "subjectHeadings": [
-            "Dune (Imaginary place) Fiction"
+            "Dune (Imaginary place) Fiction."
           ],
           "description": "This Hugo and Nebula Award winner tells the sweeping tale of a desert planet called Arrakis, the focus of an intricate power struggle in a byzantine interstellar empire. Arrakis is the sole source of Melange, the \"spice of spices.\" Melange is necessary for interstellar travel and grants psychic powers and longevity, so whoever controls it wields great influence. The troubles begin when stewardship of Arrakis is transferred by the Emperor from the Harkonnen Noble House to House Atreides. The Harkonnens don't want to give up their privilege, though, and through sabotage and treachery they cast young Duke Paul Atreides out into the planet's harsh environment to die. There he falls in with the Fremen, a tribe of desert dwellers who become the basis of the army with which he will reclaim what's rightfully his. Paul Atreides, though, is far more than just a usurped duke. He might be the end product of a very long-term genetic experiment designed to breed a super human; he might be a messiah. His struggle is at the center of a nexus of powerful people and events, and the repercussions will be felt throughout the Imperium."
         },
@@ -32,7 +32,7 @@
           "bibType": "DIGITAL",
           "totalCopies": 15,
           "availableCopies": 0,
-          "heldCopies": 74,
+          "heldCopies": 63,
           "circulationType": "REQUEST",
           "eresourceUrl": null
         },
@@ -47,8 +47,8 @@
           }
         }
       },
-      "S30C3599662": {
-        "id": "S30C3599662",
+      "S246C940348": {
+        "id": "S246C940348",
         "briefInfo": {
           "title": "Dune",
           "subtitle": "",
@@ -57,15 +57,15 @@
           ],
           "format": "EAUDIOBOOK",
           "publicationDate": "2015",
-          "edition": "Unabridged",
+          "edition": "Unabridged.",
           "groupKey": "dune\ufffdherbert_frank\ufffdtext_eng",
           "isbns": [
             "9781427218360"
           ],
           "callNumber": "EAUDIO OVERDRIVE",
           "subjectHeadings": [
-            "Jesuits Fiction",
-            "Dune (Imaginary place) Fiction"
+            "Jesuits Fiction.",
+            "Dune (Imaginary place) Fiction."
           ],
           "description": "Follows the adventures of Paul Atreides, the son of a betrayed duke given up for dead on a treacherous desert planet and adopted by its fierce, nomadic people, who help him unravel his most unexpected destiny"
         },
@@ -74,8 +74,8 @@
           "statusType": "AVAILABLE",
           "bibType": "DIGITAL",
           "totalCopies": 227,
-          "availableCopies": 7,
-          "heldCopies": 2,
+          "availableCopies": 1,
+          "heldCopies": 0,
           "circulationType": "REQUEST",
           "eresourceUrl": null
         },
@@ -90,8 +90,8 @@
           }
         }
       },
-      "S30C3420266": {
-        "id": "S30C3420266",
+      "S246C821607": {
+        "id": "S246C821607",
         "briefInfo": {
           "title": "Dune",
           "subtitle": "",
@@ -100,7 +100,7 @@
           ],
           "format": "BK",
           "publicationDate": "2005",
-          "edition": "Ace trade paperback edition",
+          "edition": "Ace trade paperback edition.",
           "groupKey": "dune\ufffdherbert_frank\ufffdtext_eng",
           "isbns": [
             "9780441013593",
@@ -108,8 +108,8 @@
           ],
           "callNumber": "SCI-FIC HERBERT 2005",
           "subjectHeadings": [
-            "Jesuits Fiction",
-            "Dune (Imaginary place) Fiction"
+            "Jesuits Fiction.",
+            "Dune (Imaginary place) Fiction."
           ],
           "description": "Follows the adventures of Paul Atreides, the son of a betrayed duke given up for dead on a treacherous desert planet and adopted by its fierce, nomadic people, who help him unravel his most unexpected destiny."
         },
@@ -117,9 +117,9 @@
           "status": "UNAVAILABLE",
           "statusType": "UNAVAILABLE",
           "bibType": "PHYSICAL",
-          "totalCopies": 36,
+          "totalCopies": 30,
           "availableCopies": 0,
-          "heldCopies": 16,
+          "heldCopies": 3,
           "circulationType": "REQUEST",
           "eresourceUrl": null
         },
@@ -134,8 +134,8 @@
           }
         }
       },
-      "S30C3276462": {
-        "id": "S30C3276462",
+      "S246C735909": {
+        "id": "S246C735909",
         "briefInfo": {
           "title": "Dune",
           "subtitle": "",
@@ -152,9 +152,9 @@
           ],
           "callNumber": "CD SCI-FIC HERBERT",
           "subjectHeadings": [
-            "Dune (Imaginary place) Fiction",
-            "Life on other planets Fiction",
-            "Robots Fiction"
+            "Dune (Imaginary place) Fiction.",
+            "Life on other planets Fiction.",
+            "Robots Fiction."
           ],
           "description": "Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides, who would become the mysterious man known as Muad'Dib. He would avenge the traitorous plot against his noble family -- and would bring to fruition humankind's most ancient and unattainable dream."
         },
@@ -165,13 +165,13 @@
           "totalCopies": 1,
           "availableCopies": 0,
           "heldCopies": 0,
-          "circulationType": "REQUEST",
+          "circulationType": "NON_CIRCULATING",
           "eresourceUrl": null
         },
         "policy": {
           "materialType": "PHYSICAL",
           "provider": "ILS",
-          "holdable": true,
+          "holdable": false,
           "materialPolicy": {
             "supportsSuspendHold": false,
             "supportsSuspendHoldStartDateEdit": false,

@@ -49,8 +49,10 @@ assumed would require login — is a public call.
 
 ## Joining the two catalogs
 
-BiblioCommons bib ids (`S30C2949104`) and OverDrive ids (`1243691`) are
-unrelated, so the records must be joined. The ladder, in order:
+BiblioCommons bib ids (`S30C2949104`, an id from before Seattle's 2026
+renumbering; current ids look like `S246C…`, `library.id` 246) and OverDrive
+ids (`1243691`) are unrelated, so the records must be joined. The ladder, in
+order:
 
 1. **ISBN.** `briefInfo.isbns` on the BiblioCommons record contains the ISBN
    OverDrive records against its EPUB formats. A Thunder search for it returns
