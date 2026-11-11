@@ -44,3 +44,10 @@ def _no_real_keychain(monkeypatch):
         return subprocess.CompletedProcess(args=[], returncode=44, stdout="", stderr="")
 
     monkeypatch.setattr(config_mod, "_run_security", not_found)
+
+
+@pytest.fixture(autouse=True)
+def _no_real_state_dir(monkeypatch, tmp_path_factory):
+    """No test may touch ~/.local/state/spl-mcp: the session lock, the cookie
+    files. `~` resolves to a throwaway home for every test."""
+    monkeypatch.setenv("HOME", str(tmp_path_factory.mktemp("home")))

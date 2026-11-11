@@ -14,10 +14,13 @@ not safe under concurrency.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import http.cookiejar
 import json
 import logging
+import os
 import time
+from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
@@ -26,7 +29,12 @@ import httpx
 from bs4 import BeautifulSoup
 
 from .config import Config
-from .errors import AuthError, UnreachableError, UpstreamError
+from .errors import AuthError, SessionReplacedError, UnreachableError, UpstreamError
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - not macOS or Linux
+    fcntl = None  # type: ignore[assignment]
 
 log = logging.getLogger("spl_mcp.session")
 
@@ -36,6 +44,13 @@ _BOT_WALL_MARKERS = ("recaptcha", "hcaptcha", "datadome", "perimeterx", "cf-turn
 
 # Marks a non-GET request that cannot change the account (the login form POST).
 CHANGES_NOTHING = "spl_mcp.changes_nothing"
+
+# The cookie a sign-in sets when the library accepts the card and PIN. A
+# rejected sign-in re-renders the form with HTTP 200 and sets no such cookie.
+_ACCEPTED_LOGIN_COOKIE = "bc_access_token"
+
+# How long to wait for another server's sign-in or account request to finish.
+_LOCK_POLL_SECONDS = 0.05
 
 # Transport failures where the request provably never reached the server.
 _NOT_SENT = (httpx.ConnectError, httpx.ConnectTimeout, httpx.UnsupportedProtocol)
@@ -116,6 +131,49 @@ class SplSession:
             self._save_cookies(self._client)
             await self._client.aclose()
             self._client = None
+
+    # ------------------------------------------------------ account lock
+
+    @contextlib.asynccontextmanager
+    async def _account_lock(self) -> AsyncIterator[None]:
+        """Hold the machine-wide session lock (``config.session_lock``).
+
+        One library account has one live session, and connected libraries
+        (Seattle and KCLS) share it: a sign-in at either ends the session the
+        other server holds. Every server on this machine takes this lock for
+        each sign-in and each authenticated request, so a sign-in never lands
+        between another server's sign-in and its use of that session. The
+        in-process asyncio lock is taken first, so one process waits here at
+        most once.
+        """
+        if fcntl is None:
+            yield
+            return
+        path = self.config.session_lock
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fd = os.open(path, os.O_RDWR | os.O_CREAT, 0o600)
+        try:
+            # Generous: a holder makes at most a few requests, each bounded by
+            # the HTTP timeout.
+            deadline = time.monotonic() + 6 * self.config.timeout_seconds
+            while True:
+                try:
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    if time.monotonic() >= deadline:
+                        raise UpstreamError(
+                            "another library server on this machine has been signed in "
+                            f"and busy for over {6 * self.config.timeout_seconds:g}s "
+                            f"(lock {path}); nothing was sent. Try again shortly."
+                        ) from None
+                    await asyncio.sleep(_LOCK_POLL_SECONDS)
+            try:
+                yield
+            finally:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+        finally:
+            os.close(fd)
 
     # ------------------------------------------------------ cookie store
 
@@ -283,6 +341,19 @@ class SplSession:
 
         if resp.status_code >= 400:
             raise AuthError(f"the library refused the login with HTTP {resp.status_code}")
+        # The POST's own answer says whether the card and PIN were accepted:
+        # a redirect that sets the access cookie. Where the redirects then
+        # land is a separate fact -- the session can end before they finish.
+        accepted = bool(resp.history) and _ACCEPTED_LOGIN_COOKIE in {
+            c.split("=", 1)[0].strip() for c in resp.history[0].headers.get_list("set-cookie")
+        }
+        if accepted and self._looks_like_login(resp):
+            raise SessionReplacedError(
+                "the library accepted the card and PIN, but the session ended at once: "
+                "another sign-in to the same library account (another library server, "
+                "a browser or a phone; connected libraries such as Seattle and KCLS share "
+                "one account) replaced it. The PIN is fine. Try again in a moment."
+            )
         if self._looks_like_login(resp):
             raise AuthError(
                 "login was rejected -- still on the login page afterwards. "
@@ -298,7 +369,7 @@ class SplSession:
 
     async def login(self, *, force: bool = False) -> None:
         """Public login entry point, serialised against other session use."""
-        async with self._lock:
+        async with self._lock, self._account_lock():
             client = await self.client()
             if force:
                 client.cookies.clear()
@@ -308,7 +379,7 @@ class SplSession:
 
     async def authenticated_get(self, url: str, **kwargs: Any) -> httpx.Response:
         """GET a member page, logging in first or again exactly once if needed."""
-        async with self._lock:
+        async with self._lock, self._account_lock():
             client = await self.client()
 
             if not self._logged_in_hint:
@@ -341,7 +412,7 @@ class SplSession:
         single re-login, and it never retries a request that may have already
         taken effect -- a mutation must not be replayed blindly.
         """
-        async with self._lock:
+        async with self._lock, self._account_lock():
             client = await self.client()
             if not self._logged_in_hint:
                 await self._login(client)

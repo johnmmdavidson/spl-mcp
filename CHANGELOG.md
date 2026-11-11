@@ -2,7 +2,39 @@
 
 Notable changes, and the findings behind them. Dates are when the work landed.
 
-## 2026-11-10 — a second library: KCLS beside SPL (COR-375)
+## 2026-11-10 — the two library servers no longer clash (COR-375)
+
+### What broke
+
+With `spl` and `kcls` both registered, a Seattle call failed at random with
+"login was rejected … Check the card number and PIN" although the PIN was
+right, or with "still redirected to the login page after re-authenticating".
+Run one after the other, every call worked.
+
+### Why (probed live, 2026-11-10)
+
+A linked Seattle + KCLS account has **one live session**. A sign-in at KCLS
+ends the session Seattle's server holds (and the other way round): right after
+a KCLS sign-in, Seattle's holds page redirects to the login page. Run one at a
+time, that was hidden by the one silent re-login each request allows. In
+parallel, a KCLS sign-in could land after Seattle's sign-in was accepted (302,
+`bc_access_token` set) and before Seattle followed the redirect; the redirect
+then ended on the login page, which the server read as a rejected PIN.
+
+### The fix
+
+- Every sign-in and every authenticated request takes one machine-wide lock,
+  `~/.local/state/spl-mcp/session.lock` (`SPL_MCP_SESSION_LOCK`), shared by
+  every registration whatever its library or cookie file. A sign-in can no
+  longer land between another server's sign-in and its use of it. The cost:
+  when calls alternate between the libraries, each switch signs in again
+  (an accepted sign-in, never a failed one).
+- A sign-in the library accepted whose session then ends at once (another
+  device signing in) says so, "the PIN is fine", and is not retried. A wrong
+  PIN is still reported once and never retried. Accepted means the POST
+  answered with a redirect that sets `bc_access_token`; a rejected one
+  re-renders the form with HTTP 200.
+
 
 ### What changed
 
