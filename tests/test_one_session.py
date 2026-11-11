@@ -14,6 +14,7 @@ account, across both hosts. All credentials are synthetic.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import fcntl
 import itertools
 import os
@@ -71,7 +72,7 @@ class OneSessionLibrary:
             # Hold Seattle's redirect open briefly: long enough for an
             # unserialised KCLS sign-in to land, which is the live race.
             other = self.accepted[KCLS]
-            with __import__("contextlib").suppress(TimeoutError):
+            with contextlib.suppress(TimeoutError):
                 await asyncio.wait_for(other.wait(), timeout=0.3)
         if request.headers.get("cookie", "").find(f"bc_access_token={self.live}") >= 0:
             if path == "/v2/holds":
