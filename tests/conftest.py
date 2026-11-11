@@ -30,3 +30,17 @@ def holds_state() -> dict:
 @pytest.fixture
 def checkouts_state() -> dict:
     return load_fixture("checkouts_state.json")
+
+
+@pytest.fixture(autouse=True)
+def _no_real_keychain(monkeypatch):
+    """No test may read John's real Keychain. Every Keychain lookup sees
+    'item not found' unless a test scripts its own answer."""
+    import subprocess
+
+    from spl_mcp import config as config_mod
+
+    def not_found(service, account):
+        return subprocess.CompletedProcess(args=[], returncode=44, stdout="", stderr="")
+
+    monkeypatch.setattr(config_mod, "_run_security", not_found)

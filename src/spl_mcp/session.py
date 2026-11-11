@@ -26,13 +26,53 @@ import httpx
 from bs4 import BeautifulSoup
 
 from .config import Config
-from .errors import AuthError, UpstreamError
+from .errors import AuthError, UnreachableError, UpstreamError
 
 log = logging.getLogger("spl_mcp.session")
 
 # Terms that, if they appear on the login page, mean a bot wall went up and the
 # form-POST approach is finished. None of these were present during the spike.
 _BOT_WALL_MARKERS = ("recaptcha", "hcaptcha", "datadome", "perimeterx", "cf-turnstile")
+
+# Marks a non-GET request that cannot change the account (the login form POST).
+CHANGES_NOTHING = "spl_mcp.changes_nothing"
+
+# Transport failures where the request provably never reached the server.
+_NOT_SENT = (httpx.ConnectError, httpx.ConnectTimeout, httpx.UnsupportedProtocol)
+
+
+class PlainErrorClient(httpx.AsyncClient):
+    """An httpx client whose every network failure reads as one plain line.
+
+    Every request this server makes goes through ``send`` -- the library, the
+    holds gateway, OverDrive -- including redirects and the response body, so
+    the wording lives in one place. It overrides ``send`` rather than wrapping
+    the transport, which would switch off httpx's environment proxy routing.
+    A request that may change something (anything but GET) and failed after
+    it was sent is reported as possibly applied: it must not be retried blindly.
+    """
+
+    async def send(self, request: httpx.Request, **kwargs: Any) -> httpx.Response:
+        try:
+            return await super().send(request, **kwargs)
+        except httpx.TransportError as exc:
+            raise UnreachableError(self._describe(request, exc)) from exc
+
+    def _describe(self, request: httpx.Request, exc: httpx.TransportError) -> str:
+        if isinstance(exc, httpx.TimeoutException) and not isinstance(exc, httpx.ConnectTimeout):
+            why = "timed out"
+            if isinstance(self.timeout.read, int | float):
+                why = f"no answer within {self.timeout.read:g}s"
+        else:
+            why = type(exc).__name__
+        msg = f"the library could not be reached at {request.url.host} ({why})"
+        changes_nothing = request.method == "GET" or request.extensions.get(CHANGES_NOTHING)
+        if not changes_nothing and not isinstance(exc, _NOT_SENT):
+            msg += (
+                f"; the {request.method} may or may not have taken effect, "
+                "so check list_holds before trying again"
+            )
+        return msg
 
 
 class SplSession:
@@ -46,11 +86,14 @@ class SplSession:
         self._client: httpx.AsyncClient | None = None
         self._lock = asyncio.Lock()
         self._logged_in_hint = False
+        # Successful credential logins this session has made. Observed, so the
+        # health check can say whether a login just happened.
+        self.login_count = 0
 
     # ------------------------------------------------------------ client
 
     def _new_client(self) -> httpx.AsyncClient:
-        client = httpx.AsyncClient(
+        client = PlainErrorClient(
             headers={
                 "User-Agent": self.config.user_agent,
                 "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
@@ -235,19 +278,21 @@ class SplSession:
             action,
             data=payload,
             headers={"Referer": str(page.url), "Origin": self.config.base_url},
+            extensions={CHANGES_NOTHING: True},
         )
 
         if resp.status_code >= 400:
-            raise AuthError(f"login POST failed with HTTP {resp.status_code}")
+            raise AuthError(f"the library refused the login with HTTP {resp.status_code}")
         if self._looks_like_login(resp):
             raise AuthError(
                 "login was rejected -- still on the login page afterwards. "
-                "Check the card number and PIN in your secrets file. "
+                "Check the card number and PIN (Keychain, environment, or secrets file). "
                 "(BiblioCommons locks the account after repeated bad PINs, "
                 "so do not retry blindly.)"
             )
 
         self._logged_in_hint = True
+        self.login_count += 1
         self._save_cookies(client)
         log.info("logged in to %s", self.config.base_url)
 
@@ -283,7 +328,7 @@ class SplSession:
                     )
 
             if resp.status_code >= 400:
-                raise UpstreamError(f"GET {url} returned HTTP {resp.status_code}")
+                raise UpstreamError(f"the library refused GET {url} with HTTP {resp.status_code}")
             self._save_cookies(client)
             return resp
 
@@ -320,7 +365,7 @@ class SplSession:
         client = await self.client()
         resp = await client.get(url, **kwargs)
         if resp.status_code >= 400:
-            raise UpstreamError(f"GET {url} returned HTTP {resp.status_code}")
+            raise UpstreamError(f"the library refused GET {url} with HTTP {resp.status_code}")
         return resp
 
     # ------------------------------------------------------------ helpers

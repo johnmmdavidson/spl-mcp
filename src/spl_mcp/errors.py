@@ -64,3 +64,16 @@ class NotSupportedError(SplMcpError):
 
 class UpstreamError(SplMcpError):
     """BiblioCommons or OverDrive returned something we cannot use."""
+
+
+class UnreachableError(UpstreamError):
+    """The library could not be reached at all: DNS, connect, TLS, or timeout."""
+
+
+class StaleIdError(SplMcpError):
+    """A bib id the library no longer uses, though it still serves the work.
+
+    Seattle's records were renumbered (``S30C…`` to ``S246C…``). An old id's
+    page still answers, but under the work's new id, so the old id cannot be
+    held or looked up as itself.
+    """

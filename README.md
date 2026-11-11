@@ -173,6 +173,17 @@ Or with [uv](https://docs.astral.sh/uv/):
 uv venv && uv pip install -e .
 ```
 
+### As a command, with `uv tool` (macOS or Linux)
+
+```bash
+uv tool install "git+https://github.com/johnmmdavidson/spl-mcp@<commit-sha>"
+```
+
+This puts two commands on your PATH (`~/.local/bin` by default): `spl-mcp`,
+the stdio server an MCP client spawns, and `spl-mcp-health`. Pin a commit so
+an install is repeatable; every dependency is capped below its next major
+version, because `mcp` 2.0 removed the API this server is built on.
+
 ### On a Raspberry Pi
 
 ```bash
@@ -196,9 +207,23 @@ cp secrets.example.toml ~/.config/spl-mcp/secrets.toml
 chmod 600 ~/.config/spl-mcp/secrets.toml
 ```
 
-Put your library card number and PIN in `secrets.toml`, or set
-`SPL_MCP_CARD_NUMBER` and `SPL_MCP_PIN` in the environment. Environment
-variables always win over files.
+Credentials are read from, in order:
+
+1. `SPL_MCP_CARD_NUMBER` and `SPL_MCP_PIN` in the environment;
+2. on macOS, the Keychain: generic passwords under service `cornice-spl`,
+   accounts `card_number` and `pin` (set `SPL_MCP_KEYCHAIN_SERVICE` to use
+   another service name, or to an empty string to skip the Keychain):
+
+   ```bash
+   security add-generic-password -s cornice-spl -a card_number -w   # prompts
+   security add-generic-password -s cornice-spl -a pin -w
+   ```
+
+3. `secrets.toml`.
+
+A Keychain that exists but cannot be read (locked, access denied) is reported
+as an error, never treated as "no credentials". Without credentials the
+catalog tools still work; only the account tools need a login.
 
 **Never commit either file.** Both are in `.gitignore`.
 
@@ -214,6 +239,18 @@ Every config field has an env override named `SPL_MCP_<FIELD>` — for example
 This runs an unauthenticated search, then — if credentials are present — logs
 in and lists your holds. It prints what worked and what didn't, and never
 mutates anything.
+
+For a one-screen answer to "is it working", run `spl-mcp-health` (or call the
+`health_check` tool). It reports three things: the server is up, the library
+is reachable, and the login works. It exits non-zero unless all three pass. A
+check it could not run is shown as `skip`, never as a pass:
+
+```
+[  ok  ] server: spl-mcp 0.1.0 is up; read_only=True
+[  ok  ] library: https://seattle.bibliocommons.com answered
+[ FAIL ] login: login was rejected -- still on the login page afterwards. ...
+status: degraded
+```
 
 ---
 
@@ -246,6 +283,9 @@ For Claude Code specifically:
 ```bash
 claude mcp add spl -- /home/pi/spl-mcp/.venv/bin/python -m spl_mcp.server
 ```
+
+With a `uv tool` install and credentials in the Keychain, the entry needs no
+secrets at all: `{"command": "/Users/<you>/.local/bin/spl-mcp"}`.
 
 ---
 

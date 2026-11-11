@@ -2,6 +2,54 @@
 
 Notable changes, and the findings behind them. Dates are when the work landed.
 
+## 2026-11-10 — the server starts again; Keychain login; health check; hold queue
+
+### Why it broke
+
+`pyproject.toml` asked for `mcp>=1.2`. `mcp` 2.0.0 shipped on 2026-07-28, the
+day after the last change here, and removed `mcp.server.fastmcp`. Any fresh
+install or upgrade since then resolves to 2.x and `spl-mcp` dies on import:
+`ModuleNotFoundError: No module named 'mcp.server.fastmcp'`. Every tool is gone
+at once. The test suite stayed green because no test imported `server.py`.
+
+Every dependency is now capped below its next major version, and
+`tests/test_server.py` imports the server and lists its tools. Under `mcp`
+2.3.0 that test fails at collection with the error above.
+
+### The library renumbered its records
+
+Seattle's bib ids moved from `S30C…` to `S246C…` (`library.id` is now 246).
+An old id's record page still answers 200, but carries the work under its new
+ids and names the new one in `catalogBibs.catalogBib.id`. `get_title` and
+`check_ebook_formats` now say so in one line, listing the current ids, rather
+than a parse error. They do not map an old id to a new one: the page names
+the work, not which edition the old id was. `check.py` takes its sample id
+from a live search instead of hardcoding one.
+
+### Hold queue, before placing
+
+`get_title` gains a `queue` block. BiblioCommons publishes, per edition, the
+number of holds (`heldCopies`) and copies (`totalCopies`): "16 holds on 16
+copies" for The Road's ebook on 2026-11-10. It does **not** publish where a new
+hold would land. The record page, the public availability endpoint
+(`gateway…/v2/libraries/seattle/bibs/{id}/availability`, fields
+`heldCopies availableCopies totalCopies onOrderCopies volumesCount status …`)
+and the search page carry no position field; `holdsPosition` exists only on a
+hold already placed. `position_if_placed` is therefore always null, with a note
+saying so. For ebooks, OverDrive's `estimatedWaitDays` was already reported by
+`check_ebook_formats`.
+
+### Credentials, health, errors
+
+- Card number and PIN are read from the macOS Keychain (service `cornice-spl`)
+  after the env vars and before `secrets.toml`.
+- `health_check` tool and `spl-mcp-health` command.
+- One plain line for an unreachable library, worded in one place in the
+  session. A write that failed after it may have reached the library says it
+  may have taken effect. The OverDrive lookup now treats an unreachable
+  OverDrive as "could not determine", not as an error.
+- HTTP errors read "the library refused GET … with HTTP 503".
+
 ## 2026-07-27 — `list_checkouts` and `list_ready_to_borrow`
 
 Two read-only tools. Tool count 8 → 10.
