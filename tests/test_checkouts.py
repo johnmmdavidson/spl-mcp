@@ -40,7 +40,7 @@ class TestParsing:
         assert item.format_label == "Book"
 
     def test_missing_bib_degrades_without_failing(self, checkouts_state):
-        del checkouts_state["entities"]["bibs"]["S30C1000001"]
+        del checkouts_state["entities"]["bibs"]["S246C1000001"]
         item = next(
             c for c in parse_checkouts(checkouts_state).physical if c.checkout_id == "90000001"
         )

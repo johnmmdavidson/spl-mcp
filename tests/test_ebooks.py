@@ -163,31 +163,42 @@ class TestFormats:
         assert _formats_from_item({}) == []
 
 
+def _bib_id_of_format(state: dict, fmt: str) -> str:
+    """The fixture's record id for one format, so a fixture refresh needs no test edit."""
+    (bib_id,) = [
+        bid for bid, b in state["entities"]["bibs"].items() if b["briefInfo"]["format"] == fmt
+    ]
+    return bib_id
+
+
 class TestEditionSelection:
     def test_uses_the_ebook_edition_directly(self, record_ebook_state):
-        bib_id, bib, note = _select_ebook_bib(
-            record_ebook_state, "S30C2949104", url="http://test"
-        )
-        assert bib_id == "S30C2949104"
+        ebook = _bib_id_of_format(record_ebook_state, "EBOOK")
+        bib_id, bib, note = _select_ebook_bib(record_ebook_state, ebook, url="http://test")
+        assert bib_id == ebook
         assert note is None
         assert bib["briefInfo"]["format"] == "EBOOK"
 
     def test_resolves_the_ebook_sibling_of_a_physical_edition(self, record_ebook_state):
         # Asking "can I Kindle this?" about the paperback should answer about
         # the ebook edition of the same work, and say that it did.
-        bib_id, bib, note = _select_ebook_bib(
-            record_ebook_state, "S30C3420266", url="http://test"
-        )
-        assert bib_id == "S30C2949104"
+        ebook = _bib_id_of_format(record_ebook_state, "EBOOK")
+        paperback = _bib_id_of_format(record_ebook_state, "BK")
+        bib_id, bib, note = _select_ebook_bib(record_ebook_state, paperback, url="http://test")
+        assert bib_id == ebook
         assert bib["briefInfo"]["format"] == "EBOOK"
-        assert "S30C3420266" in note and "ebook edition" in note
+        assert paperback in note and "ebook edition" in note
 
     def test_resolves_the_ebook_sibling_of_an_audiobook(self, record_ebook_state):
-        bib_id, _, note = _select_ebook_bib(
-            record_ebook_state, "S30C3599662", url="http://test"
-        )
-        assert bib_id == "S30C2949104"
+        ebook = _bib_id_of_format(record_ebook_state, "EBOOK")
+        audiobook = _bib_id_of_format(record_ebook_state, "EAUDIOBOOK")
+        bib_id, _, note = _select_ebook_bib(record_ebook_state, audiobook, url="http://test")
+        assert bib_id == ebook
         assert "EAUDIOBOOK" in note
+
+    def test_fixture_carries_current_record_ids(self, record_ebook_state):
+        # Seattle renumbered S30C... to S246C...; a refresh must capture current ids.
+        assert all(bid.startswith("S246C") for bid in record_ebook_state["entities"]["bibs"])
 
     def test_only_matches_siblings_of_the_same_work(self):
         # An unrelated ebook on the page must never be picked up.

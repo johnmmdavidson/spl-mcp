@@ -16,7 +16,9 @@ from spl_mcp.models import format_label
 def test_parses_groups_and_pagination(search_state):
     results = parse_search(search_state, "dune")
     assert results.query == "dune"
-    assert results.total_matches == 396
+    # Read from the fixture, so a fixture refresh (the count moves) needs no test edit.
+    assert results.total_matches == search_state["search"]["catalogSearch"]["pagination"]["count"]
+    assert isinstance(results.total_matches, int) and results.total_matches > 6
     assert results.returned == len(results.results) == 6
 
 

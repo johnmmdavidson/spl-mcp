@@ -5,8 +5,16 @@ Only **unauthenticated, public catalog** pages are captured, and each payload is
 reduced to the fields the parsers actually read. Nothing personal can end up in
 the repo through this path: no account page is fetched.
 
-The holds fixture is *not* generated here -- it is hand-written synthetic data
-in ``tests/fixtures/holds_state.json``, because real holds are personal.
+The script runs as an anonymous visitor: it uses a throwaway cookie jar, so it
+never reads or writes your signed-in session, and the pages it captures are the
+ones anyone sees. It needs no credentials and never signs in.
+
+Record ids are found by a live search, never hardcoded: Seattle renumbered its
+records once (``S30C…`` to ``S246C…``), and a hardcoded id would go stale again.
+
+The holds and checkouts fixtures are *not* generated here -- they are
+hand-written synthetic data (``tests/fixtures/holds_state.json``,
+``tests/fixtures/checkouts_state.json``), because real holds are personal.
 
 Usage:  python scripts/refresh_fixtures.py
 """
@@ -16,6 +24,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -120,22 +129,56 @@ def reduce_record(state: dict) -> dict:
     }
 
 
+# A well-held title whose work has physical, ebook and eaudiobook editions.
+SEARCH_QUERY = "dune"
+EBOOK_TITLE = "Dune"
+
+
+def find_ebook_bib_id(state: dict, title: str) -> str:
+    """The EBOOK edition titled exactly ``title`` in the search results.
+
+    Read from the live search, so the record id is always one the library uses
+    today. Matched on title rather than result position, because the ranking
+    moves. Fails loudly rather than capturing some other record.
+    """
+    bibs = state["entities"]["bibs"]
+    for entry in state["search"]["catalogSearch"]["results"]:
+        for bid in [entry.get("representative"), *(entry.get("manifestations") or [])]:
+            brief = (bibs.get(bid) or {}).get("briefInfo") or {}
+            if brief.get("format") == "EBOOK" and (brief.get("title") or "").casefold() == (
+                title.casefold()
+            ):
+                return bid
+    raise SystemExit(
+        f"no EBOOK edition titled {title!r} in the search results for {SEARCH_QUERY!r}; "
+        "pick another query in scripts/refresh_fixtures.py"
+    )
+
+
 async def main() -> None:
-    config = Config()
+    with tempfile.TemporaryDirectory(prefix="spl-mcp-fixtures-") as tmp:
+        # Anonymous: a fresh, empty cookie jar that is thrown away afterwards.
+        config = Config(cookie_store=Path(tmp) / "cookies.json")
+        await capture(config)
+
+
+async def capture(config: Config) -> None:
     session = SplSession(config)
     FIXTURES.mkdir(parents=True, exist_ok=True)
     try:
         # A search whose top group spans physical, ebook, and eaudiobook.
         url = config.search_url
-        resp = await session.get(url, params={"searchType": "smart", "query": "dune"})
-        data = reduce_search(extract_state(resp.text, url=url))
+        resp = await session.get(url, params={"searchType": "smart", "query": SEARCH_QUERY})
+        search = extract_state(resp.text, url=url)
+        ebook_id = find_ebook_bib_id(search, EBOOK_TITLE)
+        data = reduce_search(search)
         (FIXTURES / "search_state.json").write_text(json.dumps(data, indent=2) + "\n")
         n_bibs = len(data["entities"]["bibs"])
         n_groups = len(data["search"]["catalogSearch"]["results"])
         print(f"wrote search_state.json ({n_groups} groups, {n_bibs} bibs)")
 
         # The ebook record, used by the Kindle-resolution tests.
-        for bib_id, name in (("S30C2949104", "record_ebook_state.json"),):
+        for bib_id, name in ((ebook_id, "record_ebook_state.json"),):
             url = config.record_url(bib_id)
             resp = await session.get(url)
             data = reduce_record(extract_state(resp.text, url=url))

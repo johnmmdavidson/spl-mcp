@@ -2,6 +2,24 @@
 
 Notable changes, and the findings behind them. Dates are when the work landed.
 
+## 2026-11-11 — the fixture refresh follows the renumbered records (COR-376)
+
+`scripts/refresh_fixtures.py` hardcoded the ebook record `S30C2949104`. It
+still worked on 2026-11-11, because an old id's page answers 200 with the
+work's current records, but only for as long as the library keeps serving old
+ids. It now finds the ebook record by a live search ("dune", the EBOOK edition
+titled "Dune"), matched on title rather than rank, and stops with a plain error
+if that edition is missing. It also runs with a throwaway cookie jar, so it
+never reads or writes the signed-in session's cookies and captures only what an
+anonymous visitor sees.
+
+The search and ebook-record fixtures are regenerated (`S246C…` ids, still only
+the fields the parsers read). The hand-written holds and checkouts fixtures stay
+synthetic; only their ids moved to the `S246C…` shape. The ebook tests read
+their ids from the fixture by format, and the search test reads its match count
+from the fixture, so the next refresh needs no test edit. The `S30C…` examples
+in `docs/GATEWAY.md` and `docs/KINDLE.md` are marked as pre-renumbering.
+
 ## 2026-11-10 — the two library servers no longer clash (COR-375)
 
 ### What broke

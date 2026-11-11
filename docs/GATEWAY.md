@@ -114,6 +114,11 @@ Don't try to match cancelled holds by their original id.
 
 ## Operations
 
+> **Ids in these examples predate the renumbering.** The `S30C…` record ids
+> below were captured before Seattle renumbered its records in 2026; current
+> Seattle ids look like `S246C…` (`library.id` 246). An old id no longer names a
+> current record. The request shapes are unchanged.
+
 ### Place a hold — `POST`
 
 ```json

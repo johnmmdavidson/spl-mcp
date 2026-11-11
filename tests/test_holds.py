@@ -56,7 +56,7 @@ class TestParsing:
         assert hold.pickup_branch_code == "CEN"
         assert hold.placed == "2026-05-03"
         assert hold.expires == "2027-02-07"
-        assert hold.bib_id == "S30C1000001"
+        assert hold.bib_id == "S246C1000001"
         assert hold.item_id == "1000001"
 
     def test_actions_are_read_per_hold_not_assumed(self, holds_state):
