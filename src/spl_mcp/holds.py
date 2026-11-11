@@ -253,13 +253,24 @@ class GatewayContext:
             return None
 
         if library_id is not None:
-            matched = [a for a in candidates if account_library(a) == library_id]
+            # Compared as strings: the page carries both as ints today, and a
+            # type change on one side must not turn a match into a miss.
+            matched = [
+                a for a in candidates if str(account_library(a)) == str(library_id)
+            ]
             if len(matched) == 1:
                 return matched[0].get("id")
-            if len(matched) > 1:
+            if matched:
                 return None  # ambiguous: refuse rather than guess
+            # No card names this library. A card that names another library
+            # is never used here, even when it is the only one: that is how a
+            # hold goes out on the wrong library's card. A lone card that
+            # names no library at all is unknown, not wrong, and falls through.
+            if any(account_library(a) is not None for a in candidates):
+                return None
 
-        # Only safe to assume when there is genuinely nothing to choose between.
+        # Nothing says which card is whose. Only safe to assume when there is
+        # genuinely nothing to choose between.
         if len(candidates) == 1:
             return candidates[0].get("id")
         return None

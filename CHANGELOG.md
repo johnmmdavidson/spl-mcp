@@ -2,6 +2,48 @@
 
 Notable changes, and the findings behind them. Dates are when the work landed.
 
+## 2026-11-10 — a second library: KCLS beside SPL (COR-375)
+
+### What changed
+
+- Every tool answer starts with a `library` field naming the library
+  ("Seattle Public Library", "King County Library System"); the existing
+  fields are unchanged. Every error starts with the library's name, and so does
+  the health report. The server's MCP name is now `bibliocommons-library` and
+  its instructions no longer say Seattle.
+- `SPL_MCP_SLUG=kcls` alone now configures KCLS: its site, its OverDrive key
+  (`kcls`), its Keychain service (`cornice-kcls`) and its own cookie file
+  (`cookies-kcls.json`). Before, a second registration that set only the slug
+  inherited Seattle's site, Seattle's OverDrive counts, Seattle's card and
+  Seattle's cookie jar. Explicit settings still win; Seattle's defaults are
+  unchanged. `SPL_MCP_LIBRARY_NAME` names any other library.
+- A page whose only card names another library is now refused, not used.
+  Before, a lone card was used whatever library it belonged to. `library.id`
+  and `libId` are compared as strings.
+
+### What the probe found at KCLS (2026-11-10)
+
+Same software, same shapes: the login form (`name`, `user_pin`,
+`authenticity_token`), the embedded page state, the record page's
+`availability` block, the holds gateway (`gateway.bibliocommons.com/v2`). The
+differences:
+
+| | Seattle | KCLS |
+|---|---|---|
+| `library.id`, id prefix | 246, `S246C…` | 82, `S82C…` |
+| OverDrive key | `spl` | `kcls` (`kingcounty` is an alias, same website id 12) |
+| login page `destination` | `/user_dashboard` | `https://kcls.org` |
+| login field hint | card number, PIN | "Username or Library Card Number", "Password or PIN" |
+| branch codes | numeric | numeric, 58 branches incl. 24-hour lockers |
+| ebooks | OverDrive | OverDrive, plus hoopla records filed as `EBOOK` with `materialType` PHYSICAL, not holdable |
+
+The two are "connected libraries": a patron's linked accounts put both cards on
+either library's pages, and each page lists only its own library's holds.
+
+One transient: KCLS's record page for one title once reported `totalCopies: 0`
+beside 20 holds, and 21 copies on every later read. The queue block reports
+what the page says; it does not correct it.
+
 ## 2026-11-10 — the server starts again; Keychain login; health check; hold queue
 
 ### Why it broke

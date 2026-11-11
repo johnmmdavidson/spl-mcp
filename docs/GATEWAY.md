@@ -76,7 +76,17 @@ another library's card, which the gateway answers with a bare **HTTP 500**.
 
 Accordingly this server **never falls back to "the first account"**. If it
 cannot identify exactly one account matching `library.id`, it raises and sends
-nothing.
+nothing. That includes a page whose only card names another library: it is
+refused, not used. Only a lone card that names no library at all is taken as
+the one.
+
+**Connected libraries (re-probed 2026-11-10).** Seattle (`library.id` 246) and
+KCLS (82) are BiblioCommons "connected libraries": KCLS's login page says so.
+For a patron whose two online accounts are linked, the holds page at *either*
+library carries both cards in `entities.accounts` (`libId` 246 and 82), and
+`entities.holds` holds only that page's library's holds (`S246C…` at Seattle,
+`S82C…` at KCLS). So each library's server reads its own holds from its own
+site, and picks its card by `libId`.
 
 ## Reading inactive holds
 

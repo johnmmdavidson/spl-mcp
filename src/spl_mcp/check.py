@@ -98,7 +98,8 @@ async def run() -> int:
                 line(SKIP, "login + holds: no credentials configured")
             print()
             print("To enable the authenticated tools, add the card number and PIN to the")
-            print(f"macOS Keychain (service {keychain_service()!r}, accounts 'card_number' and")
+            service = keychain_service(config.slug)
+            print(f"macOS Keychain (service {service!r}, accounts 'card_number' and")
             print("'pin'), set SPL_MCP_CARD_NUMBER and SPL_MCP_PIN, or fill in")
             print("~/.config/spl-mcp/secrets.toml.")
         else:

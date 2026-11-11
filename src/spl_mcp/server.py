@@ -29,7 +29,10 @@ logging.basicConfig(
 log = logging.getLogger("spl_mcp")
 
 INSTRUCTIONS = """
-Search the Seattle Public Library catalog and manage library holds.
+Search one BiblioCommons library's catalog and manage holds there. Which
+library: every answer carries a `library` field with its name, and every error
+starts with it. Two libraries are two registrations of this server, each with
+its own login; a bib id belongs to the library that returned it.
 
 Search results are grouped by work: each result carries a `formats` list with
 one entry per edition (physical book, large print, audio CD, ebook,
@@ -62,7 +65,7 @@ Mutating tools are disabled entirely unless the server is configured with
 read_only = false, in which case they will say so plainly.
 """.strip()
 
-mcp = FastMCP("spl", instructions=INSTRUCTIONS)
+mcp = FastMCP("bibliocommons-library", instructions=INSTRUCTIONS)
 
 _config: Config | None = None
 _session: SplSession | None = None
@@ -88,15 +91,33 @@ def get_session() -> SplSession:
     return _session
 
 
+def _library_name() -> str | None:
+    try:
+        return get_config().library_name
+    except SplMcpError:
+        return None
+
+
+def _labelled(answer: dict[str, Any]) -> dict[str, Any]:
+    """Every answer says which library it came from, ahead of its own fields.
+
+    Additive: callers that read the existing fields see them unchanged.
+    """
+    return {"library": get_config().library_name, **answer}
+
+
 def _fail(exc: Exception) -> ToolError:
-    """Surface our own errors as clean agent-readable messages.
+    """Surface our own errors as clean agent-readable messages, named by library.
 
     Anything unexpected keeps its type name so a real bug stays diagnosable.
     """
     if isinstance(exc, SplMcpError | ValueError):
-        return ToolError(str(exc))
-    log.exception("unexpected error in tool")
-    return ToolError(f"{type(exc).__name__}: {exc}")
+        msg = str(exc)
+    else:
+        log.exception("unexpected error in tool")
+        msg = f"{type(exc).__name__}: {exc}"
+    name = _library_name()
+    return ToolError(f"{name}: {msg}" if name else msg)
 
 
 # ------------------------------------------------------------- read tools
@@ -115,7 +136,7 @@ async def search_titles(
 ) -> dict[str, Any]:
     try:
         result = await catalog.search_titles(get_session(), get_config(), query, limit)
-        return result.model_dump(mode="json")
+        return _labelled(result.model_dump(mode="json"))
     except Exception as exc:
         raise _fail(exc) from exc
 
@@ -136,7 +157,7 @@ async def get_title(
         brief = bib.get("briefInfo") or {}
         avail = bib.get("availability") or {}
         policy = bib.get("policy") or {}
-        return {
+        return _labelled({
             "bib_id": bib_id,
             "title": brief.get("title"),
             "subtitle": brief.get("subtitle") or None,
@@ -159,7 +180,7 @@ async def get_title(
             "available_copies": avail.get("availableCopies"),
             "hold_queue": avail.get("heldCopies"),
             "queue": catalog.queue_summary(avail),
-        }
+        })
     except Exception as exc:
         raise _fail(exc) from exc
 
@@ -179,7 +200,7 @@ async def check_ebook_formats(
 ) -> dict[str, Any]:
     try:
         report = await ebooks.check_ebook_formats(get_session(), get_config(), bib_id)
-        return report.model_dump(mode="json")
+        return _labelled(report.model_dump(mode="json"))
     except Exception as exc:
         raise _fail(exc) from exc
 
@@ -195,7 +216,7 @@ async def check_ebook_formats(
 async def list_holds() -> dict[str, Any]:
     try:
         result = await holds.list_holds(get_session(), get_config())
-        return result.model_dump(mode="json")
+        return _labelled(result.model_dump(mode="json"))
     except Exception as exc:
         raise _fail(exc) from exc
 
@@ -211,7 +232,7 @@ async def list_holds() -> dict[str, Any]:
 async def list_checkouts() -> dict[str, Any]:
     try:
         result = await checkouts.list_checkouts(get_session(), get_config())
-        return result.model_dump(mode="json")
+        return _labelled(result.model_dump(mode="json"))
     except Exception as exc:
         raise _fail(exc) from exc
 
@@ -228,7 +249,7 @@ async def list_checkouts() -> dict[str, Any]:
 async def list_ready_to_borrow() -> dict[str, Any]:
     try:
         result = await holds.list_ready_to_borrow(get_session(), get_config())
-        return result.model_dump(mode="json")
+        return _labelled(result.model_dump(mode="json"))
     except Exception as exc:
         raise _fail(exc) from exc
 
@@ -242,7 +263,7 @@ async def list_ready_to_borrow() -> dict[str, Any]:
 )
 async def health_check() -> dict[str, Any]:
     try:
-        return await health.run_health(get_config(), get_session())
+        return _labelled(await health.run_health(get_config(), get_session()))
     except Exception as exc:
         raise _fail(exc) from exc
 
@@ -273,7 +294,7 @@ async def place_hold(
 ) -> dict[str, Any]:
     try:
         result = await holds.place_hold(get_session(), get_config(), bib_id, pickup_branch)
-        return result.model_dump(mode="json")
+        return _labelled(result.model_dump(mode="json"))
     except Exception as exc:
         raise _fail(exc) from exc
 
@@ -290,7 +311,7 @@ async def cancel_hold(
 ) -> dict[str, Any]:
     try:
         result = await holds.cancel_hold(get_session(), get_config(), hold_id)
-        return result.model_dump(mode="json")
+        return _labelled(result.model_dump(mode="json"))
     except Exception as exc:
         raise _fail(exc) from exc
 
@@ -312,7 +333,7 @@ async def suspend_hold(
 ) -> dict[str, Any]:
     try:
         result = await holds.suspend_hold(get_session(), get_config(), hold_id, until)
-        return result.model_dump(mode="json")
+        return _labelled(result.model_dump(mode="json"))
     except Exception as exc:
         raise _fail(exc) from exc
 
@@ -329,7 +350,7 @@ async def reactivate_hold(
 ) -> dict[str, Any]:
     try:
         result = await holds.reactivate_hold(get_session(), get_config(), hold_id)
-        return result.model_dump(mode="json")
+        return _labelled(result.model_dump(mode="json"))
     except Exception as exc:
         raise _fail(exc) from exc
 
