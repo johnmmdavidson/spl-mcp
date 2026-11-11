@@ -88,6 +88,11 @@ library carries both cards in `entities.accounts` (`libId` 246 and 82), and
 `S82C…` at KCLS). So each library's server reads its own holds from its own
 site, and picks its card by `libId`.
 
+**One live session.** The linked account has one live session across both
+sites: a sign-in at KCLS ends the session a Seattle client holds, and the
+other way round. Two servers therefore take a shared lock around every
+sign-in and authenticated request (`session.lock` beside the cookie files).
+
 ## Reading inactive holds
 
 Cancelled and expired holds are *not* in the `/v2/holds` page state —

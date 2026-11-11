@@ -321,6 +321,10 @@ file, never Seattle's. Anything set explicitly wins.
 }
 ```
 
+The servers share one lock, `~/.local/state/spl-mcp/session.lock`
+(`SPL_MCP_SESSION_LOCK`): a linked account has one live session, and a sign-in
+at one library ends the other's, so sign-ins and account requests take turns.
+
 Every tool answer starts with a `library` field naming the library, and every
 error starts with its name. A bib id belongs to the library that returned it:
 the same work has different ids at each (`S246C…` at SPL, `S82C…` at KCLS).
