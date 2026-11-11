@@ -1,7 +1,10 @@
 # spl-mcp
 
 An [MCP](https://modelcontextprotocol.io) server that lets a personal AI agent
-search the **Seattle Public Library** catalog and manage library holds.
+search a BiblioCommons library's catalog and manage library holds: the
+**Seattle Public Library** by default, the **King County Library System** with
+one setting, and both at once as two registrations. Every answer says which
+library it came from.
 
 It is a single-user, personal project. It runs over stdio, is spawned by your
 MCP client, and talks to the library the same way your browser does — plain
@@ -246,7 +249,8 @@ is reachable, and the login works. It exits non-zero unless all three pass. A
 check it could not run is shown as `skip`, never as a pass:
 
 ```
-[  ok  ] server: spl-mcp 0.1.0 is up; read_only=True
+library: Seattle Public Library
+[  ok  ] server: spl-mcp 0.1.0 is up for Seattle Public Library; read_only=True
 [  ok  ] library: https://seattle.bibliocommons.com answered
 [ FAIL ] login: login was rejected -- still on the login page afterwards. ...
 status: degraded
@@ -289,6 +293,45 @@ secrets at all: `{"command": "/Users/<you>/.local/bin/spl-mcp"}`.
 
 ---
 
+## Two libraries: SPL and KCLS
+
+Run the server twice, once per library. Each registration has its own login,
+its own read-only switch and its own cookie jar. Setting the slug is enough
+for a library the server knows (`seattle`, `kcls`): it then uses that
+library's site, its OverDrive key, its own Keychain service and its own cookie
+file, never Seattle's. Anything set explicitly wins.
+
+| | `spl` | `kcls` |
+|---|---|---|
+| `SPL_MCP_SLUG` | `seattle` (default) | `kcls` |
+| site | `https://seattle.bibliocommons.com` | `https://kcls.bibliocommons.com` |
+| OverDrive key | `spl` | `kcls` |
+| Keychain service | `cornice-spl` | `cornice-kcls` |
+| cookie file | `~/.local/state/spl-mcp/cookies.json` | `…/cookies-kcls.json` |
+| `library` in answers | `Seattle Public Library` | `King County Library System` |
+
+```json
+{
+  "mcpServers": {
+    "spl":  { "command": "/Users/<you>/.local/bin/spl-mcp",
+              "env": { "SPL_MCP_READ_ONLY": "true" } },
+    "kcls": { "command": "/Users/<you>/.local/bin/spl-mcp",
+              "env": { "SPL_MCP_SLUG": "kcls", "SPL_MCP_READ_ONLY": "true" } }
+  }
+}
+```
+
+Every tool answer starts with a `library` field naming the library, and every
+error starts with its name. A bib id belongs to the library that returned it:
+the same work has different ids at each (`S246C…` at SPL, `S82C…` at KCLS).
+Pickup branch codes are numeric at both; list them from
+`https://gateway.bibliocommons.com/v2/libraries/<slug>/branches`.
+
+If your cards at the two libraries are linked ("connected libraries" in
+BiblioCommons), each library's pages carry both cards. Each server acts only
+on the card whose `libId` is its own library's, and refuses rather than use
+the other library's card. See [docs/GATEWAY.md](docs/GATEWAY.md).
+
 ## Another library
 
 Nothing here is Seattle-specific except the defaults. Point it at any
@@ -298,6 +341,7 @@ BiblioCommons library:
 [library]
 slug = "vpl"
 base_url = "https://vpl.bibliocommons.com"
+name = "Vancouver Public Library"   # the `library` field in every answer
 ```
 
 The OverDrive/Kindle lookup needs that library's OverDrive slug
