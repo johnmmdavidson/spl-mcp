@@ -119,6 +119,15 @@ class Config:
     cookie_store: Path = field(
         default_factory=lambda: Path("~/.local/state/spl-mcp/cookies.json").expanduser()
     )
+    # One lock for every registration of this server on the machine, whatever
+    # its library or cookie file: a BiblioCommons account has one live session,
+    # shared by connected libraries, so a sign-in at one library ends the
+    # session another server is using. Logins and authenticated requests take
+    # this lock so they never interleave. Not derived from cookie_store, which
+    # differs per registration.
+    session_lock: Path = field(
+        default_factory=lambda: Path("~/.local/state/spl-mcp/session.lock").expanduser()
+    )
     # credentials, resolved lazily so unauthenticated tools work without them
     credentials: Credentials | None = None
     # why credentials could not be read, when they exist but are unreadable.
@@ -313,6 +322,8 @@ def load_config(path: Path | None = None) -> Config:
         if "cookie_store" in paths:
             cfg.cookie_store = Path(paths["cookie_store"]).expanduser()
             explicit.add("cookie_store")
+        if "session_lock" in paths:
+            cfg.session_lock = Path(paths["session_lock"]).expanduser()
 
     # -- environment overrides ---------------------------------------
     env = os.environ
@@ -342,6 +353,8 @@ def load_config(path: Path | None = None) -> Config:
     if "SPL_MCP_COOKIE_STORE" in env:
         cfg.cookie_store = Path(env["SPL_MCP_COOKIE_STORE"]).expanduser()
         explicit.add("cookie_store")
+    if "SPL_MCP_SESSION_LOCK" in env:
+        cfg.session_lock = Path(env["SPL_MCP_SESSION_LOCK"]).expanduser()
 
     _apply_library_defaults(cfg, explicit)
 

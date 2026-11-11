@@ -20,6 +20,15 @@ class AuthError(SplMcpError):
     """Login failed, or a session expired and could not be renewed."""
 
 
+class SessionReplacedError(AuthError):
+    """The library accepted the card and PIN, then the session ended at once.
+
+    Not a bad PIN: another sign-in to the same library account (another
+    server, a browser, a phone) replaced the session before this one could
+    use it. Never reported as rejected credentials.
+    """
+
+
 class ParseError(SplMcpError):
     """The page did not contain the JSON shape we expect.
 
